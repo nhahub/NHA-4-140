@@ -1,12 +1,54 @@
-import React, { useState } from 'react';
-import { Sparkles, ArrowRight, Zap, TrendingUp, ShieldCheck, Search, ChevronRight } from 'lucide-react';
-import { brands, cars } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, ArrowRight, Zap, TrendingUp, ShieldCheck, Search, ChevronRight, Loader2 } from 'lucide-react';
+import { brands as defaultBrands } from '../data/mockData';
 import { BrandCard, CarCard } from '../components/CarCards';
 import FilterPanel from '../components/FilterPanel';
+import { fetchCars, fetchBrands } from '../api/carApi';
 import { cn } from '../hooks/utils';
 
 const Marketplace = () => {
   const [activeBrand, setActiveBrand] = useState('All');
+  const [cars, setCars] = useState([]);
+  const [brands, setBrands] = useState(defaultBrands);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadCars();
+    loadBrands();
+  }, [page]);
+
+  const loadCars = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchCars(page, 12);
+      setCars(data.cars);
+      setTotalPages(data.total_pages);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadBrands = async () => {
+    try {
+      const data = await fetchBrands();
+      if (data.brands && data.brands.length > 0) {
+        const formattedBrands = data.brands.map((brand, index) => ({
+          id: brand.toLowerCase().replace(/\s/g, '_'),
+          name: brand,
+          logo: `https://placehold.co/100x100/png?text=${brand}`
+        }));
+        setBrands([{ id: 'all', name: 'All', logo: 'https://placehold.co/100x100/png?text=All' }, ...formattedBrands]);
+      }
+    } catch (err) {
+      console.error('Failed to load brands:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 pb-24 transition-colors duration-300">
@@ -80,7 +122,7 @@ const Marketplace = () => {
               isActive={activeBrand === 'All'}
               onClick={() => setActiveBrand('All')}
             />
-            {brands.map((brand) => (
+            {brands.filter(b => b.name !== 'All').map((brand) => (
               <BrandCard 
                 key={brand.id} 
                 brand={brand} 
@@ -113,13 +155,48 @@ const Marketplace = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-          {cars.map((car) => (
-            <div key={car.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-              <CarCard car={car} />
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20 text-red-500">
+            <p>Error: {error}</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+              {cars.map((car) => (
+                <div key={car.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                  <CarCard car={car} />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-12">
+                <button 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-800 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 text-gray-600 dark:text-slate-400">
+                  Page {page} of {totalPages}
+                </span>
+                <button 
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-800 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Stats Section */}
         <section className="mt-32 p-12 rounded-[3rem] glass border border-white/20 dark:border-slate-800/20 relative overflow-hidden">

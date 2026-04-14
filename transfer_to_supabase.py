@@ -1,16 +1,20 @@
 import csv
 import psycopg2
 from psycopg2.extras import execute_values
+import os
+
+
+def get_connection_string():
+    env_path = os.path.join(os.path.dirname(__file__), 'Backend', 'supabase', '.env')
+    with open(env_path, 'r') as f:
+        for line in f:
+            if line.startswith('CONNECTION_STRING='):
+                return line.split('=')[1].strip()
+    raise ValueError("Connection string not found in .env")
+
 
 def transfer_csv_to_supabase():
-    # Database connection parameters for Supabase local
-    db_params = {
-        'host': 'localhost',
-        'port': 54322,
-        'database': 'postgres',
-        'user': 'postgres',
-        'password': 'postgres'  # Default password for Supabase local
-    }
+    connection_string = get_connection_string()
     
     # CSV file path
     csv_file_path = r'E:\DEPI-GENERATIVE-FINAL-PROJECT\Backend\final_data.csv'
@@ -18,7 +22,7 @@ def transfer_csv_to_supabase():
     try:
         # Connect to the database
         print("Connecting to Supabase database...")
-        conn = psycopg2.connect(**db_params)
+        conn = psycopg2.connect(connection_string)
         cursor = conn.cursor()
         
         # Test connection

@@ -1,2 +1,5 @@
 psycopg2-binary>=2.9.0
 python-dotenv>=1.0.0
+pytest>=9.0.0
+flask>=3.0.0
+flask-cors>=4.0.0

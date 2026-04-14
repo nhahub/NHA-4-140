@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import ChatbotWidget from './components/ChatbotWidget';
 import Marketplace from './pages/Marketplace';
+import CarDetails from './pages/CarDetails';
 import SellCar from './pages/SellCar';
 import Profile from './pages/Profile';
 import AIFeatures from './pages/AIFeatures';
@@ -33,6 +34,11 @@ const AppContent = () => {
           <Route path="/" element={
             <ProtectedRoute>
               <Marketplace />
+            </ProtectedRoute>
+          } />
+          <Route path="/car/:id" element={
+            <ProtectedRoute>
+              <CarDetails />
             </ProtectedRoute>
           } />
           <Route path="/sell-car" element={
