@@ -36,9 +36,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (contextAdId) {
       set({ contextAdId })
     }
-    if (!state.sessionToken) {
-      set({ sessionToken: Math.random().toString(36).substring(2, 15) })
-    }
     set({ isOpen: true })
   },
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -75,6 +75,7 @@ export function AdForm({ isEdit, initialData }: AdFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const idempotencyKey = useRef(crypto.randomUUID())
 
   const {
     register,
@@ -594,12 +595,13 @@ export function AdForm({ isEdit, initialData }: AdFormProps) {
       if (isEdit && initialData?.id) {
         await api.patchForm(`/ads/${initialData.id}`, formData)
       } else {
-        await api.postForm('/ads', formData)
+        await api.postForm('/ads', formData, {
+          headers: { 'X-Idempotency-Key': idempotencyKey.current },
+        })
       }
       router.push('/')
     } catch {
       setSubmitError('Failed to submit ad. Please try again.')
-    } finally {
       setIsSubmitting(false)
     }
   }

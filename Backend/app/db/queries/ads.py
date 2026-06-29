@@ -20,19 +20,20 @@ async def insert_ad(
     special_conditions: str | None,
     description: str | None,
     city: str,
+    idempotency_key: str | None = None,
 ) -> dict:
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             """
             INSERT INTO ads (user_id, brand, model, year, price, condition, km_driven,
                              color, body_type, transmission, fuel_type, cc_range,
-                             special_conditions, description, city)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+                             special_conditions, description, city, idempotency_key)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
             RETURNING *
             """,
             user_id, brand, model, year, price, condition, km_driven,
             color, body_type, transmission, fuel_type, cc_range,
-            special_conditions, description, city,
+            special_conditions, description, city, idempotency_key,
         )
         return dict(row)
 
@@ -184,7 +185,7 @@ async def get_ad_images(pool: asyncpg.Pool, ad_id: UUID) -> List[dict]:
             "SELECT id, url, order_index FROM ad_images WHERE ad_id = $1 ORDER BY order_index",
             ad_id,
         )
-        return [dict(r) for r in rows]
+        return [{"id": str(r["id"]), "url": r["url"], "order_index": r["order_index"]} for r in rows]
 
 
 async def batch_get_ad_images(pool: asyncpg.Pool, ad_ids: List[UUID]) -> dict:
@@ -224,6 +225,14 @@ async def delete_ad_image(pool: asyncpg.Pool, image_id: UUID) -> dict | None:
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             "DELETE FROM ad_images WHERE id = $1 RETURNING url", image_id
+        )
+        return dict(row) if row else None
+
+
+async def get_ad_by_idempotency_key(pool: asyncpg.Pool, key: str) -> dict | None:
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM ads WHERE idempotency_key = $1", key
         )
         return dict(row) if row else None
 

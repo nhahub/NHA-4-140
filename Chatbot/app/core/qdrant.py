@@ -66,13 +66,13 @@ class QdrantSearch:
 
         query_filter = qmodels.Filter(must=must) if must else None
 
-        results = self.client.search(
+        results = self.client.query_points(
             collection_name=self.collection,
-            query_vector=vector,
+            query=vector,
             query_filter=query_filter,
             limit=limit,
             with_payload=True,
-        )
+        ).points
 
         points = []
         for r in results:

@@ -1,25 +1,71 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useChatStore } from '@/store/chatStore'
 import { useSSE } from './useSSE'
-import type { ChatMessage } from '@/types/chat'
+import { api } from '@/lib/api'
+import type { ChatMessage, ChatHistory } from '@/types/chat'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 export function useChat() {
   const {
     messages, isStreaming, sessionToken, contextAdId,
-    addMessage, appendToken, setStreaming, setSessionToken,
+    addMessage, appendToken, setStreaming, setSessionToken, clearMessages,
   } = useChatStore()
 
   const { start, stop } = useSSE()
 
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('chat_session_token')
+    if (savedToken) {
+      setSessionToken(savedToken)
+      api.get<ChatHistory>(`/chat/history/${savedToken}`)
+        .then((history) => {
+          if (history.messages.length > 0) {
+            clearMessages()
+            for (const m of history.messages) {
+              addMessage({
+                role: m.role as 'user' | 'assistant' | 'system',
+                content: m.content,
+                type: 'text',
+                created_at: m.created_at,
+              })
+            }
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('chat_session_token')
+          setSessionToken(null)
+        })
+    }
+  }, [])
+
+  // Persist session token to localStorage whenever it changes
+  useEffect(() => {
+    if (sessionToken) {
+      localStorage.setItem('chat_session_token', sessionToken)
+    }
+  }, [sessionToken])
+
+  const ensureSession = useCallback(async (token?: string): Promise<string> => {
+    const res = await api.post<{ session_token: string; is_new: boolean }>(
+      '/chat/session',
+      { context_ad_id: contextAdId }
+    )
+    const t = res.session_token
+    setSessionToken(t)
+    localStorage.setItem('chat_session_token', t)
+    return t
+  }, [contextAdId, setSessionToken])
+
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return
 
-    const token = sessionToken || Math.random().toString(36).substring(2, 15)
-    if (!sessionToken) setSessionToken(token)
+    const token = sessionToken
+      ? sessionToken
+      : await ensureSession()
 
     const userMsg: Omit<ChatMessage, 'id'> = {
       role: 'user',

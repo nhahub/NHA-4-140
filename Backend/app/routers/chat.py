@@ -5,16 +5,17 @@ from pydantic import BaseModel
 import asyncpg
 import httpx
 import json
+import logging
 import secrets
 
 from app.dependencies import get_db, get_optional_user
+from app.schemas.chat import ChatSessionRequest
+from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
-CHATBOT_URL = "http://chatbot:8001"
-
-
-class SessionRequest(BaseModel):
-    context_ad_id: str | None = None
+CHATBOT_URL = settings.chatbot_url
 
 
 class MessageRequest(BaseModel):
@@ -25,7 +26,7 @@ class MessageRequest(BaseModel):
 
 @router.post("/session")
 async def create_session(
-    body: SessionRequest,
+    body: ChatSessionRequest,
     pool: asyncpg.Pool = Depends(get_db),
     user_id: UUID | None = Depends(get_optional_user),
 ):
@@ -68,24 +69,43 @@ async def send_message(
             body.session_token,
         )
 
-    async def generate():
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            async with client.stream(
-                "POST",
-                f"{CHATBOT_URL}/message",
-                json={
-                    "session_token": body.session_token,
-                    "message": body.message,
-                    "context_ad_id": body.context_ad_id,
-                    "user_id": str(user_id) if user_id else None,
-                },
-            ) as response:
-                async for chunk in response.aiter_lines():
-                    if chunk:
-                        yield f"data: {chunk}\n\n"
-        yield "data: {\"type\": \"done\"}\n\n"
+    payload = {
+        "session_token": body.session_token,
+        "message": body.message,
+        "context_ad_id": body.context_ad_id,
+        "user_id": str(user_id) if user_id else None,
+    }
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    async def stream_from_chatbot():
+        try:
+            async with httpx.AsyncClient(timeout=None) as client:
+                async with client.stream(
+                    "POST",
+                    f"{CHATBOT_URL}/message",
+                    json=payload,
+                ) as response:
+                    async for chunk in response.aiter_bytes():
+                        yield chunk
+        except httpx.RemoteProtocolError as e:
+            logger.warning("Chatbot stream closed early: %s", e)
+            yield b'data: {"type": "done", "content": null}\n\n'
+        except httpx.ConnectError:
+            yield b'data: {"type": "error", "content": "Chatbot service unavailable"}\n\n'
+            yield b'data: {"type": "done", "content": null}\n\n'
+        except Exception as e:
+            logger.error("Stream proxy error: %s", e, exc_info=True)
+            yield b'data: {"type": "error", "content": "Something went wrong"}\n\n'
+            yield b'data: {"type": "done", "content": null}\n\n'
+
+    return StreamingResponse(
+        stream_from_chatbot(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @router.get("/history/{session_token}")

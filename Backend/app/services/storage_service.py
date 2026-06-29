@@ -1,8 +1,12 @@
 import logging
 from supabase import Client
-from typing import List, Optional
+from typing import List
 
 logger = logging.getLogger(__name__)
+
+
+class StorageUploadError(Exception):
+    pass
 
 
 def upload_file(
@@ -11,18 +15,16 @@ def upload_file(
     path: str,
     file_bytes: bytes,
     content_type: str,
-) -> Optional[str]:
-    try:
-        supabase.storage.from_(bucket).upload(
-            path=path,
-            file=file_bytes,
-            file_options={"content-type": content_type, "upsert": "true"},
-        )
-        public_url = supabase.storage.from_(bucket).get_public_url(path)
-        return public_url
-    except Exception as e:
-        logger.warning("Failed to upload %s to Supabase: %s", path, e)
-        return None
+) -> str:
+    supabase.storage.from_(bucket).upload(
+        path=path,
+        file=file_bytes,
+        file_options={"content-type": content_type, "upsert": "true"},
+    )
+    public_url = supabase.storage.from_(bucket).get_public_url(path)
+    if not public_url:
+        raise StorageUploadError(f"Failed to get public URL for {path}")
+    return public_url
 
 
 def delete_file(supabase: Client, bucket: str, path: str) -> None:

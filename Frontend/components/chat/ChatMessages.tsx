@@ -58,9 +58,9 @@ export function ChatMessages({ messages, isStreaming }: ChatMessagesProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-surface-border hover:scrollbar-thumb-text-secondary">
       {messages.map((msg) => {
-        if (msg.role === 'system' || msg.role === 'user') {
+        if (msg.role === 'system' || msg.role === 'user' || msg.role === 'assistant') {
           const isUser = msg.role === 'user'
           return (
             <div

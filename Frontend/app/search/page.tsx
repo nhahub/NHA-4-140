@@ -23,7 +23,7 @@ export default function SearchPage() {
       return
     }
     setIsLoading(true)
-    api.get<{ ads: Ad[] }>('/ads/search', { q: query })
+    api.get<{ ads: Ad[] }>('/search', { q: query })
       .then((data) => setAds(data.ads))
       .catch(() => setAds([]))
       .finally(() => setIsLoading(false))

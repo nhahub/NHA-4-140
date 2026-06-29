@@ -13,7 +13,7 @@ interface AdGridClientProps {
 export function AdGridClient({ initialAds }: AdGridClientProps) {
   const t = useTranslations('home')
   const { ads, filters, isLoading, hasMore, loadMore, updateFilters, resetFilters } = useAds({
-    autoFetch: initialAds.length === 0,
+    autoFetch: true,
   })
 
   const displayAds = ads.length > 0 ? ads : initialAds

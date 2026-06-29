@@ -29,3 +29,8 @@ class FileTooLargeException(HTTPException):
 class UnsupportedMediaTypeException(HTTPException):
     def __init__(self, detail: str = "Unsupported file type"):
         super().__init__(status_code=415, detail=detail)
+
+
+class StorageUploadException(HTTPException):
+    def __init__(self, detail: str = "File upload failed"):
+        super().__init__(status_code=500, detail=detail)

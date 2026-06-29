@@ -28,19 +28,59 @@ async def upsert_user_preferences(pool: asyncpg.Pool, session_token: str, user_i
     }
 
     col_names = list(fields.keys())
-    placeholders = [f"${i+1}" for i in range(len(col_names))]
+    # $1 is session_token, so field placeholders start at $2
     updates = [f"{k} = EXCLUDED.{k}" for k in col_names]
 
     async with pool.acquire() as conn:
         await conn.execute(
             f"""
             INSERT INTO user_preferences (session_token, {', '.join(col_names)})
-            VALUES ($1, {', '.join(placeholders)})
+            VALUES ($1::VARCHAR, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10,
+                    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
             ON CONFLICT (session_token)
-            DO UPDATE SET {', '.join(updates)}
+            DO UPDATE SET
+                user_id                = EXCLUDED.user_id::uuid,
+                budget_min             = EXCLUDED.budget_min,
+                budget_max             = EXCLUDED.budget_max,
+                preferred_brands       = EXCLUDED.preferred_brands,
+                preferred_body_types   = EXCLUDED.preferred_body_types,
+                preferred_fuel_types   = EXCLUDED.preferred_fuel_types,
+                preferred_transmission = EXCLUDED.preferred_transmission,
+                preferred_cities       = EXCLUDED.preferred_cities,
+                max_km_driven          = EXCLUDED.max_km_driven,
+                year_min               = EXCLUDED.year_min,
+                year_max               = EXCLUDED.year_max,
+                use_case               = EXCLUDED.use_case,
+                is_seller              = EXCLUDED.is_seller,
+                seller_car_brand       = EXCLUDED.seller_car_brand,
+                seller_car_model       = EXCLUDED.seller_car_model,
+                seller_car_year        = EXCLUDED.seller_car_year,
+                seller_asking_price    = EXCLUDED.seller_asking_price,
+                seller_intent          = EXCLUDED.seller_intent,
+                intent_history         = EXCLUDED.intent_history,
+                turn_count             = EXCLUDED.turn_count
             """,
             session_token,
-            *[fields[k] for k in col_names],
+            user_id,
+            fields["budget_min"],
+            fields["budget_max"],
+            fields["preferred_brands"],
+            fields["preferred_body_types"],
+            fields["preferred_fuel_types"],
+            fields["preferred_transmission"],
+            fields["preferred_cities"],
+            fields["max_km_driven"],
+            fields["year_min"],
+            fields["year_max"],
+            fields["use_case"],
+            fields["is_seller"],
+            fields["seller_car_brand"],
+            fields["seller_car_model"],
+            fields["seller_car_year"],
+            fields["seller_asking_price"],
+            fields["seller_intent"],
+            fields["intent_history"],
+            fields["turn_count"],
         )
 
 
@@ -55,7 +95,7 @@ async def insert_chat_message(
     async with pool.acquire() as conn:
         await conn.execute(
             "INSERT INTO chat_messages (session_token, role, content, node_used, referenced_ad_ids) "
-            "VALUES ($1, $2, $3, $4, $5)",
+            "VALUES ($1::VARCHAR, $2, $3, $4, $5)",
             session_token, role, content, node_used, referenced_ad_ids,
         )
 
@@ -64,7 +104,7 @@ async def get_chat_history(pool: asyncpg.Pool, session_token: str) -> List[dict]
     async with pool.acquire() as conn:
         rows = await conn.fetch(
             "SELECT role, content, node_used, created_at FROM chat_messages "
-            "WHERE session_token = $1 ORDER BY created_at",
+            "WHERE session_token = $1::VARCHAR ORDER BY created_at",
             session_token,
         )
         return [dict(r) for r in rows]
@@ -73,7 +113,7 @@ async def get_chat_history(pool: asyncpg.Pool, session_token: str) -> List[dict]
 async def get_preferences(pool: asyncpg.Pool, session_token: str) -> dict | None:
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT * FROM user_preferences WHERE session_token = $1",
+            "SELECT * FROM user_preferences WHERE session_token = $1::VARCHAR",
             session_token,
         )
         return dict(row) if row else None

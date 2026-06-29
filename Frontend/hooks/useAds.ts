@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '@/lib/api'
 import type { Ad, AdFilters, AdListResponse } from '@/types/ad'
 
@@ -17,6 +17,7 @@ export function useAds(options: UseAdsOptions = {}) {
   const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const isFirstRender = useRef(true)
 
   const fetchAds = useCallback(async (pageNum: number, append: boolean = false) => {
     setIsLoading(true)
@@ -37,6 +38,10 @@ export function useAds(options: UseAdsOptions = {}) {
   }, [filters])
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     if (autoFetch) {
       setPage(1)
       fetchAds(1)

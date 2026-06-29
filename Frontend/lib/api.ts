@@ -34,9 +34,9 @@ async function request<T>(
   method: string,
   path: string,
   body?: any,
-  opts?: { formData?: boolean }
+  opts?: { formData?: boolean; headers?: Record<string, string> }
 ): Promise<T> {
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { ...opts?.headers }
   if (!opts?.formData) {
     headers['Content-Type'] = 'application/json'
   }
@@ -52,9 +52,10 @@ async function request<T>(
     const newToken = await refreshToken()
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`
+      const retryHeaders = { ...opts?.headers, ...headers }
       const retryRes = await fetch(`${API_URL}${path}`, {
         method,
-        headers,
+        headers: retryHeaders,
         body: opts?.formData ? body : body ? JSON.stringify(body) : undefined,
         credentials: 'include',
       })
@@ -80,8 +81,8 @@ export const api = {
 
   del: <T>(path: string) => request<T>('DELETE', path),
 
-  postForm: <T>(path: string, formData: FormData) =>
-    request<T>('POST', path, formData, { formData: true }),
+  postForm: <T>(path: string, formData: FormData, opts?: { headers?: Record<string, string> }) =>
+    request<T>('POST', path, formData, { formData: true, ...opts }),
 
   patchForm: <T>(path: string, formData: FormData) =>
     request<T>('PATCH', path, formData, { formData: true }),

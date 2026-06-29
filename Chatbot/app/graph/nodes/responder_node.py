@@ -33,7 +33,7 @@ async def responder_node(state: CarsChatState, config: RunnableConfig) -> dict:
             await asyncio.sleep(0.02)
 
     # 2. Emit node_response text as token events
-    asyncio.ensure_future(send_tokens())
+    token_task = asyncio.ensure_future(send_tokens())
 
     # 3. Emit retrieved_ads (cars)
     retrieved = state.get("retrieved_ads", [])
@@ -55,10 +55,10 @@ async def responder_node(state: CarsChatState, config: RunnableConfig) -> dict:
     if price_analysis:
         _emit(sse_queue, {"type": "price_analysis", "content": price_analysis})
 
-    # Wait a tiny bit for token streaming to start
-    await asyncio.sleep(0.1)
+    # 6. Wait for token streaming to finish
+    await token_task
 
-    # 6. Background persistence tasks
+    # 7. Background persistence tasks
     if pool:
         from app.db.queries import insert_chat_message, upsert_user_preferences
 
@@ -93,7 +93,7 @@ async def responder_node(state: CarsChatState, config: RunnableConfig) -> dict:
             upsert_user_preferences(pool, session_token, state.get("user_id"), prefs)
         )
 
-    # 7. Emit done event
+    # 8. Emit done event (after all tokens have been sent)
     _emit(sse_queue, {"type": "done", "content": None})
 
     # 8. Append to messages

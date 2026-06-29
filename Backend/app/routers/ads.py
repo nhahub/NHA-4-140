@@ -12,7 +12,8 @@ from app.db.queries import views as views_queries
 from app.services.ads_service import get_ad_response, batch_ad_response
 from app.services.storage_service import upload_file, delete_file
 from app.services.indexing_pipeline import index_ad, delete_ad_from_qdrant
-from app.core.exceptions import NotFoundException, ForbiddenException, UnsupportedMediaTypeException, FileTooLargeException
+from app.core.exceptions import NotFoundException, ForbiddenException, UnsupportedMediaTypeException, FileTooLargeException, StorageUploadException
+from app.services.storage_service import StorageUploadError
 from app.config import settings
 
 router = APIRouter(prefix="/ads", tags=["ads"])
@@ -99,10 +100,15 @@ async def create_ad(
 ):
     if len(files) > MAX_FILES:
         raise FileTooLargeException("Maximum 10 images allowed")
+    idempotency_key = request.headers.get("x-idempotency-key")
+    if idempotency_key:
+        existing = await ads_queries.get_ad_by_idempotency_key(pool, idempotency_key)
+        if existing:
+            return await get_ad_response(pool, existing, user_id)
     ad = await ads_queries.insert_ad(
         pool, user_id, brand, model, year, price, condition, km_driven,
         color, body_type, transmission, fuel_type, cc_range,
-        special_conditions, description, city,
+        special_conditions, description, city, idempotency_key,
     )
     ad_id = ad["id"]
 
@@ -117,9 +123,11 @@ async def create_ad(
         if len(contents) > MAX_FILE_SIZE:
             continue
         path = f"ads/{ad_id}/{idx}.jpg"
-        url = upload_file(supabase, settings.supabase_storage_bucket, path, contents, f.content_type)
-        if url:
-            uploaded_images.append({"url": url, "order_index": idx})
+        try:
+            url = upload_file(supabase, settings.supabase_storage_bucket, path, contents, f.content_type)
+        except StorageUploadError:
+            raise StorageUploadException(f"Failed to upload image {f.filename}")
+        uploaded_images.append({"url": url, "order_index": idx})
 
     if uploaded_images:
         await ads_queries.insert_ad_images(pool, ad_id, uploaded_images)
@@ -220,7 +228,10 @@ async def add_images(
         if len(contents) > MAX_FILE_SIZE:
             continue
         path = f"ads/{ad_id}/{next_idx}.jpg"
-        url = upload_file(supabase, settings.supabase_storage_bucket, path, contents, f.content_type)
+        try:
+            url = upload_file(supabase, settings.supabase_storage_bucket, path, contents, f.content_type)
+        except StorageUploadError:
+            raise StorageUploadException(f"Failed to upload image {f.filename}")
         uploaded.append({"url": url, "order_index": next_idx})
         next_idx += 1
 

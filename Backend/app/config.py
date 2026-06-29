@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     redis_url: str | None = None
 
+    chatbot_url: str = "http://localhost:8001"
+
     environment: str = "development"
     allowed_origins: str = "http://localhost:3000"
 
@@ -31,7 +33,7 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> List[str]:
         return [o.strip() for o in self.allowed_origins.split(",")]
 
-    model_config = {"env_file": "../.env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": "../.env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

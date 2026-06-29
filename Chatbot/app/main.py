@@ -27,6 +27,77 @@ async def lifespan(app: FastAPI):
     app.state.session_start = time.time()
 
     try:
+        async with pool.acquire() as conn:
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS chat_sessions (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id UUID,
+                    session_token VARCHAR(128) NOT NULL UNIQUE,
+                    context_ad_id UUID,
+                    last_active TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+            await conn.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint c
+                        JOIN pg_class t ON c.conrelid = t.oid
+                        WHERE t.relname = 'chat_sessions' AND c.contype = 'u'
+                    ) THEN
+                        ALTER TABLE chat_sessions ADD UNIQUE (session_token);
+                    END IF;
+                END;
+                $$;
+            """)
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    session_token VARCHAR(128) NOT NULL REFERENCES chat_sessions(session_token),
+                    role VARCHAR(16) NOT NULL,
+                    content TEXT NOT NULL,
+                    node_used VARCHAR(64),
+                    referenced_ad_ids TEXT[],
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+            await conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_chat_messages_session_created
+                ON chat_messages (session_token, created_at)
+            """)
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS user_preferences (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    session_token VARCHAR(128) NOT NULL UNIQUE REFERENCES chat_sessions(session_token),
+                    user_id UUID,
+                    budget_min NUMERIC,
+                    budget_max NUMERIC,
+                    preferred_brands TEXT[],
+                    preferred_body_types TEXT[],
+                    preferred_fuel_types TEXT[],
+                    preferred_transmission VARCHAR(32),
+                    preferred_cities TEXT[],
+                    max_km_driven NUMERIC,
+                    year_min INTEGER,
+                    year_max INTEGER,
+                    use_case VARCHAR(64),
+                    is_seller BOOLEAN DEFAULT FALSE,
+                    seller_car_brand VARCHAR(64),
+                    seller_car_model VARCHAR(64),
+                    seller_car_year INTEGER,
+                    seller_asking_price NUMERIC,
+                    seller_intent VARCHAR(64),
+                    intent_history TEXT[],
+                    turn_count INTEGER DEFAULT 0,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            """)
+            logger.info("Ensured chat persistence tables exist")
+    except Exception as e:
+        logger.warning("Failed to ensure database schema: %s", e)
+
+    try:
         embedder = Embedder("all-MiniLM-L6-v2")
         logger.info("all-MiniLM-L6-v2 embedding model loaded")
     except Exception as e:
