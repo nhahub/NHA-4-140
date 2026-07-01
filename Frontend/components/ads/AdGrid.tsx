@@ -10,9 +10,11 @@ interface AdGridProps {
   isLoading?: boolean
   hasMore?: boolean
   loadMore?: () => void
+  editable?: boolean
+  onDelete?: (adId: string) => void
 }
 
-export function AdGrid({ ads, isLoading, hasMore, loadMore }: AdGridProps) {
+export function AdGrid({ ads, isLoading, hasMore, loadMore, editable, onDelete }: AdGridProps) {
   const observerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export function AdGrid({ ads, isLoading, hasMore, loadMore }: AdGridProps) {
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {ads.map((ad) => (
-          <AdCard key={ad.id} ad={ad} />
+          <AdCard key={ad.id} ad={ad} editable={editable} onDelete={onDelete} />
         ))}
         {isLoading &&
           Array.from({ length: 6 }).map((_, i) => <AdCardSkeleton key={`skeleton-${i}`} />)

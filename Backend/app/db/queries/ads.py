@@ -237,6 +237,15 @@ async def get_ad_by_idempotency_key(pool: asyncpg.Pool, key: str) -> dict | None
         return dict(row) if row else None
 
 
+async def get_brand_counts(pool: asyncpg.Pool) -> list[dict]:
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT brand, COUNT(*) as count FROM ads WHERE is_active = TRUE "
+            "GROUP BY brand ORDER BY count DESC"
+        )
+        return [{"brand": r["brand"], "count": r["count"]} for r in rows]
+
+
 async def set_qdrant_synced(pool: asyncpg.Pool, ad_id: UUID, synced: bool) -> None:
     async with pool.acquire() as conn:
         await conn.execute(

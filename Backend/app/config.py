@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     tavily_api_key: str
 
     supabase_storage_bucket: str = "car-images"
+    supabase_brand_images_bucket: str = "brand-images"
 
     redis_url: str | None = None
 

@@ -71,6 +71,7 @@ async def chat_message(request: ChatRequest, req: Request):
                     "db_pool": pool,
                     "sse_queue": queue,
                     "session_start": getattr(app.state, "session_start", None),
+                    "web_search": getattr(app.state, "web_search", None),
                 }
             }
 
@@ -106,7 +107,7 @@ async def chat_message(request: ChatRequest, req: Request):
             done_count = 0
             while True:
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    event = await asyncio.wait_for(queue.get(), timeout=45.0)
                     if event.get("type") == "done":
                         done_count += 1
                         if done_count >= 1:
@@ -114,7 +115,7 @@ async def chat_message(request: ChatRequest, req: Request):
                             break
                     yield f"data: {json.dumps(event)}\n\n"
                 except asyncio.TimeoutError:
-                    yield f"data: {json.dumps({'type': 'error', 'content': 'Request timed out'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'error', 'content': 'Request timed out after 45 seconds. Please try a simpler question.'})}\n\n"
                     break
 
             await run_task

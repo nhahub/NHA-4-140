@@ -10,6 +10,7 @@ from app.config import settings
 from app.core.llm import get_llm
 from app.core.embedder import Embedder
 from app.core.qdrant import QdrantSearch
+from app.core.web_search import WebSearch
 from app.graph.builder import build_graph
 from app.routers import chat as chat_router
 
@@ -114,6 +115,8 @@ async def lifespan(app: FastAPI):
 
     app.state.llm_fast = get_llm(streaming=False)
     app.state.llm_stream = get_llm(streaming=True)
+
+    app.state.web_search = WebSearch()
 
     app.state.graph = build_graph()
     app.state.sse_queues = {}

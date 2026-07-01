@@ -44,7 +44,7 @@ export function ChatDrawer() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden flex flex-col">
           <ChatMessages messages={messages} isStreaming={isStreaming} />
         </div>
 

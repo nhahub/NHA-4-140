@@ -33,6 +33,7 @@ Market data from current active listings (DO NOT contradict these numbers):
 Seller's car:
 - Condition: {condition}
 - KM driven: {km_driven}
+{web_context}
 
 Give a clear pricing recommendation with reasoning. Be specific.
 Mention if their km or condition affects the price vs market median.
@@ -125,7 +126,19 @@ async def seller_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 "sample_count": len(prices),
             }
 
-    # Step 3: LLM response (streaming)
+    # Step 3: Web search for market context
+    web_context = ""
+    web_search = config["configurable"].get("web_search")
+    if web_search and brand:
+        try:
+            search_query = f"{brand} {model} {year} used car price Egypt market 2026"
+            results = web_search.search(search_query)
+            if results:
+                web_context = f"\n\nWeb market context:\n{results}"
+        except Exception:
+            pass
+
+    # Step 4: LLM response (streaming)
     if seller_intent == "pricing" and price_analysis:
         system_prompt = PRICING_SYSTEM.format(
             brand=brand or "unknown",
@@ -139,6 +152,7 @@ async def seller_node(state: CarsChatState, config: RunnableConfig) -> dict:
             recommended_max=f"{price_analysis['recommended_max']:,.0f}",
             condition=condition or "not specified",
             km_driven=km_driven or "not specified",
+            web_context=web_context,
         )
     else:
         system_prompt = TIPS_SYSTEM.format(

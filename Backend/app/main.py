@@ -121,6 +121,22 @@ async def lifespan(app: FastAPI):
             logger.info("Supabase storage bucket already exists: %s", settings.supabase_storage_bucket)
     except Exception as e:
         logger.warning("Failed to ensure Supabase storage bucket: %s", e)
+
+    # Ensure brand images bucket exists
+    try:
+        buckets = app.state.supabase.storage.list_buckets()
+        bucket_names = [b.name for b in buckets]
+        if settings.supabase_brand_images_bucket not in bucket_names:
+            app.state.supabase.storage.create_bucket(
+                id=settings.supabase_brand_images_bucket,
+                options={"public": True},
+            )
+            logger.info("Created Supabase storage bucket: %s", settings.supabase_brand_images_bucket)
+        else:
+            logger.info("Supabase storage bucket already exists: %s", settings.supabase_brand_images_bucket)
+    except Exception as e:
+        logger.warning("Failed to ensure brand images bucket: %s", e)
+
     app.state.qdrant = create_qdrant_client()
     collections = app.state.qdrant.get_collections()
     if settings.qdrant_collection not in [c.name for c in collections.collections]:

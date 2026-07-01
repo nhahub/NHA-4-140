@@ -39,5 +39,8 @@ Thumbs.db
 # Models (downloaded at runtime)
 models/
 
+# Brand logos (served from Supabase storage)
+Frontend/public/brand_logos/
+
 # Logs
 *.log

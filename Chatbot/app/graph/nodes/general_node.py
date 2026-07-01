@@ -3,7 +3,6 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from app.graph.state import CarsChatState
 
-
 GENERAL_SYSTEM = """You are a knowledgeable car expert assistant for an Egyptian car marketplace.
 You help users with:
 - General car knowledge: reliability, common problems, maintenance intervals,
@@ -28,6 +27,7 @@ Conversation history:
 {message_history}
 
 User message: "{message}"
+{web_context}
 """
 
 REFINE_SYSTEM = """Did the user reveal any car preferences or seller signals in this message?
@@ -36,13 +36,50 @@ User message: "{message}"
 Existing preferences: {preferences_json}
 """
 
+SEARCH_DECIDE_SYSTEM = """Does this car-related question need a web search to answer accurately?
+Topics that need web search: reliability ratings, common problems, maintenance
+costs, fuel economy, market trends, news, car comparisons, specific model reviews,
+spare parts availability, insurance costs, recent prices, or anything time-sensitive.
+
+Topics that DON'T need web search: greetings, thanks, website help requests,
+questions about the user's preferences, or questions already answered by
+conversation history.
+
+Return ONLY a JSON object:
+{{
+  "needs_search": true/false,
+  "search_query": "optimized search query for web"  
+}}
+
+If needs_search is false, set search_query to null.
+User message: "{message}"""
+
 
 async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
     llm_fast = config["configurable"]["llm_fast"]
     llm_stream = config["configurable"]["llm_stream"]
     pool = config["configurable"].get("db_pool")
+    web_search = config["configurable"].get("web_search")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
+
+    # Web search decision
+    web_context = ""
+    if web_search:
+        try:
+            decide_resp = await llm_fast.ainvoke([
+                SystemMessage(content=SEARCH_DECIDE_SYSTEM.format(message=last_message)),
+                HumanMessage(content=last_message),
+            ])
+            decision = json.loads(
+                decide_resp.content.strip().removeprefix("```json").removesuffix("```").strip()
+            )
+            if decision.get("needs_search") and decision.get("search_query"):
+                results = web_search.search(decision["search_query"])
+                if results:
+                    web_context = f"\n\nWeb search results for reference:\n{results}"
+        except Exception:
+            pass
 
     # Build message history summary
     history_msgs = []
@@ -56,6 +93,7 @@ async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
         SystemMessage(content=GENERAL_SYSTEM.format(
             message_history=message_history,
             message=last_message,
+            web_context=web_context,
         )),
         HumanMessage(content=last_message),
     ]):

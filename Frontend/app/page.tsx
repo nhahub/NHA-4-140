@@ -1,8 +1,7 @@
 import { Search, Car } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
-import Link from 'next/link'
-import { AdGridClient } from './AdGridClient'
-import type { AdListResponse, Ad } from '@/types/ad'
+import { HomeClient } from './HomeClient'
+import type { Ad } from '@/types/ad'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
@@ -56,9 +55,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AdGridClient initialAds={initialAds} />
-      </main>
+      <HomeClient initialAds={initialAds} />
     </div>
   )
 }

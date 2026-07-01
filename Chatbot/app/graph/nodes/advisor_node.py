@@ -9,6 +9,7 @@ from app.core.hallucination_guard import build_grounding_block, validate_respons
 ADVISOR_SYSTEM = """You are a car expert assistant helping a user evaluate a specific car listing.
 
 {grounding_block}
+{web_context}
 
 Rules:
 - Answer ONLY based on the verified data above
@@ -70,6 +71,21 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
     # Step 2: Build grounded context
     grounding_block = build_grounding_block(ad_payload)
 
+    # Web search for supplementary model info
+    web_context = ""
+    web_search = config["configurable"].get("web_search")
+    if web_search:
+        try:
+            brand = ad_payload.get("brand", "")
+            model = ad_payload.get("model", "")
+            year = ad_payload.get("year", "")
+            search_query = f"{brand} {model} {year} car reliability review common problems"
+            results = web_search.search(search_query)
+            if results:
+                web_context = f"\n\nSupplementary web info for {brand} {model}:\n{results}"
+        except Exception:
+            pass
+
     # Build message history summary
     history_msgs = []
     for m in state.get("messages", []):
@@ -81,6 +97,7 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
     async for chunk in llm_stream.astream([
         SystemMessage(content=ADVISOR_SYSTEM.format(
             grounding_block=grounding_block,
+            web_context=web_context,
             message_history=message_history,
         )),
         HumanMessage(content=last_message),

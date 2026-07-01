@@ -54,6 +54,26 @@ async def list_ads(
     return result
 
 
+@router.get("/brand-counts")
+async def brand_counts(
+    pool: asyncpg.Pool = Depends(get_db),
+):
+    brands = await ads_queries.get_brand_counts(pool)
+    supabase_url = settings.supabase_url.rstrip("/")
+    bucket = settings.supabase_brand_images_bucket
+    result = []
+    for b in brands:
+        brand_name = b["brand"]
+        filename = brand_name.replace(" ", "_") + ".png"
+        logo_url = f"{supabase_url}/storage/v1/object/public/{bucket}/{filename}"
+        result.append({
+            "brand": brand_name,
+            "count": b["count"],
+            "logo_url": logo_url,
+        })
+    return {"brands": result}
+
+
 @router.get("/{ad_id}", response_model=AdResponse)
 async def get_ad(
     ad_id: UUID,
@@ -66,13 +86,14 @@ async def get_ad(
     if not ad or not ad["is_active"]:
         raise NotFoundException("Ad not found or has been removed")
     if current_user is None or current_user != ad["user_id"]:
-        background_tasks.add_task(
-            views_queries.increment_views_count, pool, ad_id
-        )
         viewer_ip = request.client.host if request.client else "0.0.0.0"
-        background_tasks.add_task(
-            views_queries.insert_ad_view, pool, ad_id, current_user, viewer_ip
-        )
+        if not await views_queries.has_recent_view(pool, ad_id, current_user, viewer_ip):
+            background_tasks.add_task(
+                views_queries.increment_views_count, pool, ad_id
+            )
+            background_tasks.add_task(
+                views_queries.insert_ad_view, pool, ad_id, current_user, viewer_ip
+            )
     return await get_ad_response(pool, ad, current_user)
 
 

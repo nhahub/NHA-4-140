@@ -26,6 +26,10 @@ export default function ProfilePage() {
     }).catch(() => {})
   }, [user])
 
+  function handleDelete(adId: string) {
+    setMyAds((prev) => prev.filter((a) => a.id !== adId))
+  }
+
   if (!user) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -64,7 +68,7 @@ export default function ProfilePage() {
               <Link href="/ads/new"><Button>{t('post_ad_cta')}</Button></Link>
             </div>
           ) : (
-            <AdGrid ads={myAds} />
+            <AdGrid ads={myAds} editable onDelete={handleDelete} />
           )}
         </div>
       )}
