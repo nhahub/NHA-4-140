@@ -73,12 +73,16 @@ async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
 
     intent_history = state.get("intent_history", []) + [node_name]
 
-    return {
+    result = {
         "next_node": node_name,
         "intent": node_name,
         "intent_history": intent_history,
-        "retrieved_ads": [],
-        "similar_ads": [],
-        "price_analysis": None,
         "node_response": "",
     }
+
+    if node_name == "search_node":
+        result["retrieved_ads"] = []
+        result["similar_ads"] = []
+        result["price_analysis"] = None
+
+    return result

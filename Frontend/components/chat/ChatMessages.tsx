@@ -60,46 +60,6 @@ export function ChatMessages({ messages, isStreaming }: ChatMessagesProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-surface-border hover:scrollbar-thumb-text-secondary">
       {messages.map((msg) => {
-        if (msg.role === 'system' || msg.role === 'user' || msg.role === 'assistant') {
-          const isUser = msg.role === 'user'
-          return (
-            <div
-              key={msg.id}
-              className={cn(
-                'flex gap-2',
-                isUser ? 'justify-end' : msg.type === 'status' || msg.type === 'error' ? 'justify-center' : 'justify-start'
-              )}
-            >
-              {!isUser && msg.type !== 'status' && msg.type !== 'error' && (
-                <div className="w-7 h-7 rounded-full bg-surface-secondary flex items-center justify-center shrink-0 mt-1">
-                  <Bot className="w-4 h-4 text-text-secondary" />
-                </div>
-              )}
-
-              <div
-                className={cn(
-                  'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-                  isUser
-                    ? 'bg-primary-500 text-white rounded-br-md'
-                    : msg.type === 'status'
-                      ? 'text-text-secondary italic text-xs text-center bg-transparent px-2 py-1'
-                      : msg.type === 'error'
-                        ? 'bg-danger/10 text-danger text-xs text-center px-3 py-1.5'
-                        : 'bg-surface-secondary text-text-primary rounded-bl-md'
-                )}
-              >
-                {msg.content}
-              </div>
-
-              {isUser && (
-                <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0 mt-1">
-                  <User className="w-4 h-4 text-white" />
-                </div>
-              )}
-            </div>
-          )
-        }
-
         if (msg.type === 'cars' && msg.cars) {
           return (
             <div key={msg.id} className="space-y-2">
@@ -144,6 +104,46 @@ export function ChatMessages({ messages, isStreaming }: ChatMessagesProps) {
                   <ChatCarCard key={car.id} car={car} />
                 ))}
               </div>
+            </div>
+          )
+        }
+
+        if (msg.role === 'system' || msg.role === 'user' || msg.role === 'assistant') {
+          const isUser = msg.role === 'user'
+          return (
+            <div
+              key={msg.id}
+              className={cn(
+                'flex gap-2',
+                isUser ? 'justify-end' : msg.type === 'status' || msg.type === 'error' ? 'justify-center' : 'justify-start'
+              )}
+            >
+              {!isUser && msg.type !== 'status' && msg.type !== 'error' && (
+                <div className="w-7 h-7 rounded-full bg-surface-secondary flex items-center justify-center shrink-0 mt-1">
+                  <Bot className="w-4 h-4 text-text-secondary" />
+                </div>
+              )}
+
+              <div
+                className={cn(
+                  'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+                  isUser
+                    ? 'bg-primary-500 text-white rounded-br-md'
+                    : msg.type === 'status'
+                      ? 'text-text-secondary italic text-xs text-center bg-transparent px-2 py-1'
+                      : msg.type === 'error'
+                        ? 'bg-danger/10 text-danger text-xs text-center px-3 py-1.5'
+                        : 'bg-surface-secondary text-text-primary rounded-bl-md'
+                )}
+              >
+                {msg.content}
+              </div>
+
+              {isUser && (
+                <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0 mt-1">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+              )}
             </div>
           )
         }

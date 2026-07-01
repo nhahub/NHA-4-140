@@ -18,6 +18,8 @@ Rules:
 - Never invent prices, km readings, years, or features
 - You CAN give general advice about this car model/brand from your knowledge,
   but clearly label it as general knowledge, not listing-specific
+- If "Images available" is "Yes", tell the user the image is shown in the car
+  card above. Do NOT say images are unavailable or missing.
 - After answering, if relevant, mention that you can show similar alternatives
 - Always respond in the same language as the user (Arabic or English)
 
@@ -45,7 +47,7 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
 
-    # Step 1: Fetch car payload
+    # Step 1: Determine which car the user is asking about
     ad_payload = None
     context_ad_id = state.get("context_ad_id")
     retrieved = state.get("retrieved_ads", [])
@@ -62,8 +64,33 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
         except Exception:
             pass
 
-    if not ad_payload and len(retrieved) == 1:
-        ad_payload = retrieved[0]
+    if not ad_payload and retrieved:
+        if len(retrieved) == 1:
+            ad_payload = retrieved[0]
+        else:
+            # Multiple results — use LLM to pick the most relevant one
+            cars_list = "\n".join(
+                f"{i+1}. {c.get('brand','')} {c.get('model','')} ({c.get('year','')}) - "
+                f"{c.get('price','')} EGP - {c.get('city','')}"
+                for i, c in enumerate(retrieved)
+            )
+            pick_resp = await llm_fast.ainvoke([
+                SystemMessage(content=(
+                    "The user had these search results and is now asking a follow-up.\n"
+                    f"Cars:\n{cars_list}\n\n"
+                    f"User: \"{last_message}\"\n\n"
+                    "Return ONLY the 1-based index number of the most relevant car, "
+                    "or 0 if none matches."
+                )),
+                HumanMessage(content=last_message),
+            ])
+            try:
+                idx = int(pick_resp.content.strip()) - 1
+                if 0 <= idx < len(retrieved):
+                    ad_payload = retrieved[idx]
+            except (ValueError, IndexError):
+                # Default to first result
+                ad_payload = retrieved[0]
 
     if not ad_payload:
         return {"next_node": "general_node", "node_response": ""}

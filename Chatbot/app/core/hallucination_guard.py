@@ -6,6 +6,10 @@ def verify_results(results: list[dict]) -> list[dict]:
 
 
 def build_grounding_block(ad_payload: dict) -> str:
+    images = ad_payload.get("images", [])
+    cover = ad_payload.get("cover_image_url")
+    has_images = bool(images) or bool(cover)
+
     return (
         "[VERIFIED LISTING DATA — base all answers on this block only]\n"
         f"Brand: {ad_payload.get('brand', 'N/A')} | Model: {ad_payload.get('model', 'N/A')} | Year: {ad_payload.get('year', 'N/A')}\n"
@@ -13,6 +17,7 @@ def build_grounding_block(ad_payload: dict) -> str:
         f"Fuel: {ad_payload.get('fuel_type', 'N/A')} | Transmission: {ad_payload.get('transmission', 'N/A')} | City: {ad_payload.get('city', 'N/A')}\n"
         f"Description: {ad_payload.get('description', 'N/A')}\n"
         f"Special conditions: {ad_payload.get('special_conditions', 'N/A')}\n"
+        f"Images available: {'Yes' if has_images else 'No'}\n"
         "[END VERIFIED DATA]"
     )
 

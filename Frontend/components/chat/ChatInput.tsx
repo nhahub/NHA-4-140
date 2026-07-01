@@ -52,7 +52,7 @@ export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={t('input_placeholder') || 'Ask me anything about cars...'}
+          placeholder={t('input_placeholder') || 'message the chatbot...'}
           rows={1}
           disabled={isStreaming}
           className={cn(
