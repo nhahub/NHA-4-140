@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     gemini_api_key: str
     tavily_api_key: str
     groq_api_key: str = ""
-    groq_model: str = "openai/gpt-oss-120b"
+ 
+ 
     openrouter_api_key: str = ""
     openrouter_vision_model: str = "google/gemini-2.0-flash-exp:free"
 

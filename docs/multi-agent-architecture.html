@@ -25,175 +25,109 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       padding: 2rem;
     }
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+    .container { max-width: 1400px; margin: 0 auto; }
     h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      font-size: 2rem; margin-bottom: 0.5rem;
       background: linear-gradient(135deg, var(--primary), var(--accent));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     h2 {
-      font-size: 1.25rem;
-      margin: 2rem 0 1rem;
-      color: var(--text);
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
+      font-size: 1.25rem; margin: 2rem 0 1rem; color: var(--text);
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
     }
-    h3 {
-      font-size: 1rem;
-      margin: 1.5rem 0 0.75rem;
-      color: var(--primary);
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: var(--primary); }
+    p { color: var(--text-muted); margin-bottom: 1rem; line-height: 1.6; }
+    ul, ol { color: var(--text-muted); margin-bottom: 1rem; padding-left: 1.5rem; line-height: 1.6; }
+    li { margin-bottom: 0.3rem; }
+    code {
+      background: var(--surface); padding: 2px 6px; border-radius: 4px;
+      font-size: 0.85rem; color: var(--amber);
     }
-    p { color: var(--text-muted); margin-bottom: 1rem; }
+    pre code {
+      display: block; padding: 1rem; overflow-x: auto;
+    }
     .diagram-wrapper {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      overflow-x: auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; overflow-x: auto;
     }
     .diagram-wrapper svg { max-width: 100%; height: auto; }
 
-    /* Node detail cards */
     .node-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem; margin: 1.5rem 0;
     }
     .node-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.25rem;
-      transition: border-color 0.2s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem; transition: border-color 0.2s;
     }
     .node-card:hover { border-color: var(--primary); }
     .node-card .name {
-      font-weight: 600;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
+      font-weight: 600; font-size: 1rem;
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
     }
     .node-card .name .tag {
-      font-size: 0.65rem;
-      background: var(--primary);
-      color: #fff;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-weight: 500;
+      font-size: 0.65rem; background: var(--primary); color: #fff;
+      padding: 2px 8px; border-radius: 4px; font-weight: 500;
     }
-    .node-card .desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 0.75rem;
-    }
+    .node-card .desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; }
     .node-card .tools-label {
-      font-size: 0.75rem;
-      color: var(--amber);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: 0.5rem;
+      font-size: 0.75rem; color: var(--amber); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;
     }
-    .node-card .tools {
-      font-size: 0.8rem;
-      color: var(--text);
-      margin-top: 0.25rem;
-    }
-    .node-card .tools li {
-      margin-left: 1rem;
-      margin-bottom: 0.15rem;
-    }
-    .node-card .llm {
-      font-size: 0.75rem;
-      color: var(--green);
-      margin-top: 0.25rem;
-    }
+    .node-card .tools { font-size: 0.8rem; color: var(--text); margin-top: 0.25rem; }
+    .node-card .tools li { margin-left: 1rem; margin-bottom: 0.15rem; }
+    .node-card .llm { font-size: 0.78rem; color: var(--green); margin-top: 0.25rem; }
+    .node-card .output { font-size: 0.78rem; color: var(--accent); margin-top: 0.25rem; }
     .node-card .edges {
-      font-size: 0.75rem;
-      color: var(--accent);
-      margin-top: 0.25rem;
-      font-style: italic;
+      font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem; font-style: italic;
     }
     .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      background: var(--surface);
-      border-radius: 10px;
+      display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem;
+      padding: 1rem; background: var(--surface); border-radius: 10px;
       border: 1px solid var(--border);
     }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-    }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
     .legend-item .dot { width: 12px; height: 12px; border-radius: 50%; }
     .legend-item .line { width: 24px; height: 3px; border-radius: 2px; }
     .llm-badge {
-      display: inline-block;
-      font-size: 0.65rem;
-      background: rgba(34,197,94,0.15);
-      color: var(--green);
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-weight: 500;
+      display: inline-block; font-size: 0.65rem;
+      background: rgba(34,197,94,0.15); color: var(--green);
+      padding: 1px 6px; border-radius: 3px; font-weight: 500;
     }
     .tool-badge {
-      display: inline-block;
-      font-size: 0.65rem;
-      background: rgba(234,179,8,0.15);
-      color: var(--amber);
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-weight: 500;
+      display: inline-block; font-size: 0.65rem;
+      background: rgba(234,179,8,0.15); color: var(--amber);
+      padding: 1px 6px; border-radius: 3px; font-weight: 500;
     }
     .tool-matrix {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-      margin: 1rem 0;
+      width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 1rem 0;
     }
     .tool-matrix th, .tool-matrix td {
-      border: 1px solid var(--border);
-      padding: 0.5rem 0.75rem;
-      text-align: left;
+      border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left;
     }
     .tool-matrix th {
-      background: var(--surface);
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-size: 0.7rem;
-      letter-spacing: 0.05em;
+      background: var(--surface); font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;
     }
     .tool-matrix td { vertical-align: top; }
     .tool-matrix .yes { color: var(--green); }
     .tool-matrix .no { color: var(--text-muted); }
 
-    .subtitle {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 2rem;
+    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+    .arch-callout {
+      background: var(--surface); border-left: 3px solid var(--primary);
+      padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0;
     }
+    .arch-callout strong { color: var(--text); }
   </style>
 </head>
 <body>
 <div class="container">
 
   <h1>Multi-Agent Architecture</h1>
-  <p class="subtitle">Cars Marketplace Egypt — LangGraph chatbot agent graph with tool calling and data flow</p>
+  <p class="subtitle">Cars Marketplace Egypt — LangGraph chatbot agent graph with tool calling, comparison analysis, and data flow</p>
 
   <div class="legend">
     <span class="legend-item"><span class="dot" style="background:var(--primary)"></span> Node</span>
@@ -205,11 +139,63 @@
     <span class="legend-item"><span class="dot" style="background:var(--green)"></span> Web Search</span>
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- SECTION 1: MULTI-AGENT GRAPH                                         -->
-  <!-- ==================================================================== -->
-  <h2>1. LangGraph Multi-Agent Flow</h2>
-  <p>Nodes route through a cycle: <strong>preference_extractor → router → specialist → responder</strong>. The router classifies intent each turn; specialist nodes return to responder which streams the result.</p>
+  <!-- ================================================================ -->
+  <!-- OVERVIEW                                                         -->
+  <!-- ================================================================ -->
+  <h2>0. System Overview</h2>
+  <p>
+    The system consists of <strong>three microservices</strong> running behind an Nginx reverse proxy,
+    plus a Next.js frontend. Each service is a separate FastAPI application with its own database pool,
+    vector search client, and LLM configuration.
+  </p>
+
+  <div class="arch-callout">
+    <strong>Chatbot Service</strong> (:8001) — LangGraph-powered multi-agent chat.<br>
+    <strong>Comparison Analysis</strong> (:8002) — Standalone car comparison pipeline.<br>
+    <strong>Backend API</strong> (:8000) — REST API for ads, auth, images, and search.<br>
+    <strong>Frontend</strong> (:3000) — Next.js app with chat, compare, and listing pages.
+  </div>
+
+  <div class="diagram-wrapper">
+    <pre class="mermaid">
+      flowchart LR
+        Nginx["Nginx (:80)"] --> FE["Frontend (:3000)"]
+        Nginx --> BE["Backend API (:8000)"]
+        Nginx --> CB["Chatbot (:8001)"]
+        Nginx --> CA["Comparison (:8002)"]
+
+        BE --> PG[(PostgreSQL Supabase)]
+        BE --> QDR[(Qdrant Cloud)]
+
+        CB --> PG
+        CB --> QDR
+        CB --> GROQ[Groq API]
+        CB --> OR[OpenRouter API]
+        CB --> DDG[DuckDuckGo]
+
+        CA --> PG
+        CA --> GROQ
+        CA --> OR
+        CA --> TAV[Tavily API]
+
+        style Nginx fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
+        style FE fill:#3b82f6,color:#fff,stroke:none
+        style BE fill:#059669,color:#fff,stroke:none
+        style CB fill:#8b5cf6,color:#fff,stroke:none
+        style CA fill:#d97706,color:#fff,stroke:none
+    </pre>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 1: CHATBOT MULTI-AGENT GRAPH                             -->
+  <!-- ================================================================ -->
+  <h2>1. Chatbot — LangGraph Multi-Agent Flow</h2>
+  <p>
+    Every user message triggers a full graph traversal: <strong>preference_extractor → router → specialist → responder</strong>.
+    The state is a <code>CarsChatState</code> TypedDict that carries messages, preferences, retrieved ads, and routing info
+    across nodes. After the responder emits all SSE events, the state's messages list is updated with the new AI response
+    and persisted to PostgreSQL.
+  </p>
 
   <div class="diagram-wrapper">
     <pre class="mermaid">
@@ -269,163 +255,197 @@
     </pre>
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- SECTION 2: NODE DETAIL CARDS                                         -->
-  <!-- ==================================================================== -->
+  <h3>State Schema</h3>
+  <p>The <code>CarsChatState</code> TypedDict flows through every node:</p>
+  <div class="diagram-wrapper">
+    <pre><code>{
+  messages:        Annotated[list, add_messages]  # conversation history
+  next_node:       str                            # routing target
+  intent:          str                            # classified intent name
+  session_token:   str                            # unique per conversation
+  user_id:         str | None
+  context_ad_id:   str | None                     # car ad being viewed
+  preferences:     UserPreferences                # accumulated over turns
+  retrieved_ads:   list[dict]                     # car cards from search/recommend
+  similar_ads:     list[dict]                     # alternatives from advisor_node
+  price_analysis:  dict | None                    # seller pricing data
+  node_response:   str                            # LLM-generated text
+  catalogue_check: dict | None                    # availability check result
+  recommendations: list[dict]                     # alternative car ads
+  turn_count:      int
+  intent_history:  list[str]                      # all intents by turn
+}</code></pre>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 2: NODE DETAIL CARDS                                     -->
+  <!-- ================================================================ -->
   <h2>2. Node Details &amp; Tool Calling</h2>
 
   <div class="node-grid">
 
-    <!-- preference_extractor -->
     <div class="node-card">
       <div class="name">preference_extractor <span class="tag">every turn</span></div>
-      <div class="desc">Extract and merge all car-preference signals from the user's latest message into accumulated UserPreferences. Runs on every turn before routing.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× FallbackLLM.ainvoke() — JSON preference extraction</div>
+      <div class="desc">Extract and merge all car-preference signals from the user's latest message into accumulated UserPreferences. Runs on every turn before routing. Merges new signals with existing — never clears prior values unless explicitly contradicted.</div>
+      <div class="output">→ <code>{"preferences": merged, "turn_count": +1}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.ainvoke()</code> — JSON preference extraction</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>format_brand_origins_prompt() — expand country/region mentions to brand lists</li>
-        <li>upsert_user_preferences() — persist to PostgreSQL (fire-and-forget)</li>
+        <li><code>format_brand_origins_prompt()</code> — expand country/region ("German car" → BMW, Mercedes, VW, etc.)</li>
+        <li><code>upsert_user_preferences()</code> — persist to PostgreSQL (fire-and-forget)</li>
       </ul>
-      <div class="edges">→ router (fixed)</div>
+      <div class="edges">→ router (fixed edge)</div>
     </div>
 
-    <!-- router -->
     <div class="node-card">
       <div class="name">router <span class="tag">every turn</span></div>
-      <div class="desc">Intent classifier — decides which specialist node should handle the request based on conversation context, preferences, and latest message.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× FallbackLLM.ainvoke() — classify into one of 5 intents</div>
-      <div class="tools-label">Tool Calls</div>
+      <div class="desc">Intent classifier — decides which specialist node should handle the request. Uses conversation history, context_ad_id, and current preferences. Returns one of 5 node names as a string.</div>
+      <div class="output">→ <code>{"next_node": str, "intent": str, "intent_history": [...]}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.ainvoke()</code> — classify into: catalogue_node | advisor_node | seller_node | guide_node | general_node</div>
+      <div class="tools-label">Routing Rules</div>
       <ul class="tools">
-        <li>None (pure LLM classification)</li>
+        <li><strong>catalogue_node:</strong> find, browse, filter, "show me", "recommend", "offer me" (buying intent)</li>
+        <li><strong>advisor_node:</strong> specific car in context, "is this a good deal?", "should I buy?"</li>
+        <li><strong>seller_node:</strong> "I want to sell", "price my car", "listing advice"</li>
+        <li><strong>guide_node:</strong> website help, how to post/filter/compare</li>
+        <li><strong>general_node:</strong> car knowledge, greetings, unclear requests</li>
       </ul>
-      <div class="edges">→ catalogue_node | advisor_node | seller_node | guide_node | general_node (conditional via next_node state)</div>
+      <div class="edges">→ one of 5 specialist nodes (conditional via <code>next_node</code> state key)</div>
     </div>
 
-    <!-- catalogue_node -->
     <div class="node-card">
       <div class="name">catalogue_node</div>
-      <div class="desc">Determine if the request is for a specific known car or broad search. If specific, checks database catalogue availability.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× FallbackLLM.ainvoke() — extract specific vs broad request</div>
+      <div class="desc">Determines if the request is for a specific known car (brand+model+year) or a broad search. If specific, checks PostgreSQL catalogue for exact matches. Routes to <code>search_node</code> if available, <code>recommendation_node</code> if not.</div>
+      <div class="output">→ <code>{"catalogue_check": {...}, "next_node": "search_node" | "recommendation_node"}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.ainvoke()</code> — extract specific vs broad request</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>format_brand_origins_prompt() — brand origin expansion</li>
-        <li>check_catalogue_availability() — SQL query to count exact-match ads</li>
+        <li><code>format_brand_origins_prompt()</code> — brand origin expansion</li>
+        <li><code>check_catalogue_availability()</code> — SQL query to count exact-match ads</li>
       </ul>
       <div class="edges">→ search_node (available or broad) | recommendation_node (not available)</div>
     </div>
 
-    <!-- search_node -->
     <div class="node-card">
       <div class="name">search_node</div>
-      <div class="desc">Vector-based semantic search against Qdrant. Builds query, enriches with preference filters, evaluates quality, potentially retries broadly.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (query build) + 1× astream (response gen)</div>
+      <div class="desc">Vector-based semantic search against Qdrant. Builds an optimized query via LLM, enriches with preference filters, performs initial search with quality evaluation. If quality is poor, retries with broader query and merges results. Also checks for new listings since session start.</div>
+      <div class="output">→ <code>{"retrieved_ads": [...], "node_response": str}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (query builder) + 1× astream (response generation)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>format_expansions_prompt() — expand colloquial car terms</li>
-        <li>embedder.encode() — text → vector embedding</li>
-        <li>qdrant_search.search() — vector search with metadata filters</li>
-        <li>verify_results() — filter to active listings only</li>
-        <li>evaluate_search_quality() — check score thresholds</li>
-        <li>compute_dcg() — rank quality metric</li>
-        <li>merge_dedup_results() — merge two result sets</li>
-        <li>get_ad_images_by_ids() — fetch image URLs from DB</li>
-        <li>get_new_matching_ads() — check for new matches since session start</li>
+        <li><code>format_expansions_prompt()</code> — expand colloquial car terms</li>
+        <li><code>embedder.encode()</code> — text → vector embedding (all-MiniLM-L6-v2)</li>
+        <li><code>qdrant_search.search()</code> — vector search with metadata filters (price, brand, city, fuel, transmission, body)</li>
+        <li><code>verify_results()</code> — filter to active listings only</li>
+        <li><code>evaluate_search_quality()</code> — check score thresholds (top_score &gt; 0.7 OR avg &gt; 0.5)</li>
+        <li><code>compute_dcg()</code> — Discounted Cumulative Gain for ranking quality</li>
+        <li><code>merge_dedup_results()</code> — merge primary + broader results, deduplicate</li>
+        <li><code>get_ad_images_by_ids()</code> — fetch image URLs from <code>ad_images</code> table</li>
+        <li><code>get_new_matching_ads()</code> — proactive "new listings" since session_created_at</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
-    <!-- recommendation_node -->
     <div class="node-card">
       <div class="name">recommendation_node</div>
-      <div class="desc">When a specific car is NOT available, find similar alternatives using relaxed search criteria.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× FallbackLLM.astream() — explain alternatives</div>
+      <div class="desc">When a specific car is NOT available in the catalogue, finds similar alternatives using relaxed search criteria: broader year range (±3 years), same body type and budget range. Generates a conversational response explaining the alternatives.</div>
+      <div class="output">→ <code>{"retrieved_ads": [...], "recommendations": [...], "node_response": str}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.astream()</code> — explain alternative suggestions</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>embedder.encode() — text → vector embedding</li>
-        <li>qdrant_search.search() — relaxed search (broader year range, same body/budget)</li>
-        <li>verify_results() — filter to active listings</li>
-        <li>get_ad_images_by_ids() — fetch image URLs</li>
+        <li><code>embedder.encode()</code> — text → vector embedding</li>
+        <li><code>qdrant_search.search()</code> — relaxed search (broader brand range, ±3 years, same body_type/budget)</li>
+        <li><code>verify_results()</code> — filter to active listings</li>
+        <li><code>get_ad_images_by_ids()</code> — fetch image URLs from DB</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
-    <!-- advisor_node -->
     <div class="node-card">
       <div class="name">advisor_node</div>
-      <div class="desc">Car expert evaluating a specific listing. Answers "is this a good deal?", grounds answers in verified listing data, web search for reliability info.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 2× ainvoke + 1× astream (main response + relevance + preference refine)</div>
+      <div class="desc">Car expert evaluating a specific listing. Determines which car the user is asking about (via context_ad_id or LLM disambiguation), builds a grounded verification block from listing data, fetches web search for reliability/common issues, generates advice, validates the response against listing data (hallucination guard), and finds similar alternatives.</div>
+      <div class="output">→ <code>{"node_response": str, "similar_ads": [...], "preferences": {...}}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 2× ainvoke (relevance + preference refine) + 1× astream (main advice response)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>build_grounding_block() — create verified listing data block</li>
-        <li>validate_response() — hallucination check on price/year</li>
-        <li><span class="tool-badge">WEB</span> web_search.search() — optional reliability/ common issues search</li>
-        <li>embedder.encode() + qdrant_search.search() — find similar cars</li>
-        <li>upsert_user_preferences() — persist refined preferences</li>
+        <li><code>build_grounding_block()</code> — create verified listing data block (price, year, km, features)</li>
+        <li><code>validate_response()</code> — hallucination check rejecting fabricated prices/years</li>
+        <li><span class="tool-badge">WEB</span> <code>web_search.search()</code> — reliability, common issues, reviews for the model</li>
+        <li><code>embedder.encode() + qdrant_search.search()</code> — find up to 3 similar cars (exclude current)</li>
+        <li><code>upsert_user_preferences()</code> — persist refined preferences</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
-    <!-- seller_node -->
     <div class="node-card">
       <div class="name">seller_node</div>
-      <div class="desc">Handle seller requests: pricing a car, listing tips, general selling advice. Market price analysis via Qdrant + optional web market data.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (extract) + 1× astream (pricing/tips response)</div>
+      <div class="desc">Handles seller requests: pricing a car (market analysis via Qdrant similar listing prices), listing tips, general selling advice. Computes median price, recommended range, adjusts for high kilometrage. Optionally fetches web market context.</div>
+      <div class="output">→ <code>{"node_response": str, "price_analysis": {...}?, "preferences": {...}}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (extract car details) + 1× astream (pricing/tips response)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>embedder.encode() + qdrant_search.search() — find similar listings for market pricing</li>
-        <li>Price computation: median, min/max, recommended range with km multiplier adjustments</li>
-        <li><span class="tool-badge">WEB</span> web_search.search() — optional market context</li>
-        <li>upsert_user_preferences() — persist seller preferences</li>
+        <li><code>embedder.encode() + qdrant_search.search()</code> — find similar listings (same brand/model, same year range) for market pricing</li>
+        <li>Price computation: median, min/max, recommended range (±15% median), km-driven multiplier adjustments</li>
+        <li><span class="tool-badge">WEB</span> <code>web_search.search()</code> — optional market context ("BMW 2020 price Egypt 2026")</li>
+        <li><code>upsert_user_preferences()</code> — persist seller fields</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
-    <!-- guide_node -->
     <div class="node-card">
       <div class="name">guide_node</div>
-      <div class="desc">Answer how-to questions about using the website: posting ads, filtering, saving, comparing, contacting sellers, etc.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (topic detect) + 1× astream (guide response)</div>
+      <div class="desc">Answer how-to questions about using the website: posting an ad, using filters, saving favorites, comparing cars, contacting sellers, managing profile. Uses a curated website features reference.</div>
+      <div class="output">→ <code>{"node_response": str}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (topic detection) + 1× astream (guide response)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li>format_website_guide() — generate website features reference text</li>
+        <li><code>format_website_guide()</code> — generate website features reference text from constants</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
-    <!-- general_node -->
     <div class="node-card">
       <div class="name">general_node</div>
-      <div class="desc">General car knowledge, buying advice, market context, greetings, small talk. Optionally performs web search for time-sensitive questions.</div>
-      <div class="llm"><span class="llm-badge">LLM</span> 2× ainvoke (search decision + preference refine) + 1× astream (response)</div>
+      <div class="desc">General car knowledge, buying advice, market context, greetings, small talk. Optionally performs DuckDuckGo web search for time-sensitive questions (reliability, prices, reviews, news). Uses an LLM sub-call to decide whether to search.</div>
+      <div class="output">→ <code>{"node_response": str, "preferences": {...}}</code></div>
+      <div class="llm"><span class="llm-badge">LLM</span> 2× ainvoke (search decision + preference refine) + 1× astream (conversation response)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><span class="tool-badge">WEB</span> web_search.search() — conditional, based on LLM decision</li>
-        <li>upsert_user_preferences() — persist extracted preferences</li>
+        <li><span class="tool-badge">WEB</span> <code>web_search.search()</code> — conditional DuckDuckGo search, based on LLM decision</li>
+        <li><code>upsert_user_preferences()</code> — persist extracted preferences</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
-    <!-- responder_node -->
     <div class="node-card">
       <div class="name">responder_node</div>
-      <div class="desc">Final output node. Streams the accumulated response text as SSE token events and emits structured data events (cars, price_analysis, similar_cars, new_matches).</div>
-      <div class="llm"><span class="llm-badge">LLM</span> None (pure orchestration)</div>
-      <div class="tools-label">Tool Calls</div>
+      <div class="desc">Final output node. Emits SSE events: status text, token-by-token response, car cards (retrieved_ads), similar cars, price analysis, and new match notifications. Then persists everything to PostgreSQL (user message + assistant response + preferences).</div>
+      <div class="output">→ <code>{"messages": [AIMessage(content=...)]}</code> (appended to state)</div>
+      <div class="llm"><span class="llm-badge">LLM</span> None (pure orchestration — no LLM call)</div>
+      <div class="tools-label">SSE Event Types (in order)</div>
       <ul class="tools">
-        <li>SSE event emission (queue-based): tokens, cars, similar_cars, price_analysis, new_match, done</li>
-        <li>insert_chat_message() — save message+response to DB</li>
-        <li>upsert_user_preferences() — save preferences with intent history</li>
+        <li><code>status</code> — "Searching listings...", "Finding alternatives..." etc.</li>
+        <li><code>token</code> — one word at a time with 20ms delay</li>
+        <li><code>cars</code> — array of car ad objects (shown as <code>ChatCarCard</code>)</li>
+        <li><code>similar_cars</code> — alternatives from advisor_node</li>
+        <li><code>price_analysis</code> — min/max/median/recommended price object</li>
+        <li><code>new_match</code> — new listings since session start (highlighted)</li>
+        <li><code>done</code> — signals stream end</li>
+      </ul>
+      <div class="tools-label">DB Persistence (fire-and-forget)</div>
+      <ul class="tools">
+        <li><code>insert_chat_message()</code> — save user message + assistant response</li>
+        <li><code>upsert_user_preferences()</code> — save preferences with turn_count + intent_history</li>
       </ul>
       <div class="edges">→ END (fixed)</div>
     </div>
 
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- SECTION 3: TOOL CALLING MATRIX                                       -->
-  <!-- ==================================================================== -->
+  <!-- ================================================================ -->
+  <!-- SECTION 3: TOOL CALLING MATRIX                                   -->
+  <!-- ================================================================ -->
   <h2>3. Tool Calling Matrix</h2>
-  <p>Each node's usage of LLM calls, database queries, vector search, and web search.</p>
 
   <div class="diagram-wrapper">
     <table class="tool-matrix">
@@ -468,7 +488,7 @@
           <td><strong>search_node</strong></td>
           <td>1× ainvoke + 1× astream</td>
           <td>get_ad_images_by_ids, get_new_matching_ads</td>
-          <td class="yes">Qdrant search (up to 2 attempts)</td>
+          <td class="yes">Qdrant search (up to 2 attempts + merge)</td>
           <td class="no">—</td>
           <td>format_expansions, verify_results, evaluate_quality, compute_dcg, merge_dedup</td>
         </tr>
@@ -476,7 +496,7 @@
           <td><strong>recommendation_node</strong></td>
           <td>1× astream</td>
           <td>get_ad_images_by_ids</td>
-          <td class="yes">Qdrant search (relaxed)</td>
+          <td class="yes">Qdrant search (relaxed: ±3yr, same body/budget)</td>
           <td class="no">—</td>
           <td>verify_results</td>
         </tr>
@@ -484,17 +504,17 @@
           <td><strong>advisor_node</strong></td>
           <td>2× ainvoke + 1× astream</td>
           <td>upsert_user_preferences</td>
-          <td class="yes">Qdrant search (similar cars)</td>
-          <td class="yes">web_search.search</td>
+          <td class="yes">Qdrant search (similar cars, exclusions)</td>
+          <td class="yes"><span class="tool-badge">WEB</span> web_search.search (reliability data)</td>
           <td>build_grounding_block, validate_response (hallucination guard)</td>
         </tr>
         <tr>
           <td><strong>seller_node</strong></td>
           <td>1× ainvoke + 1× astream</td>
           <td>upsert_user_preferences</td>
-          <td class="yes">Qdrant search (market analysis)</td>
-          <td class="yes">web_search.search</td>
-          <td>Price computation (median, km multipliers)</td>
+          <td class="yes">Qdrant search (market price analysis)</td>
+          <td class="yes"><span class="tool-badge">WEB</span> web_search.search (market context)</td>
+          <td>Price computation (median, min/max, km-driven multipliers)</td>
         </tr>
         <tr>
           <td><strong>guide_node</strong></td>
@@ -509,7 +529,7 @@
           <td>2× ainvoke + 1× astream</td>
           <td>upsert_user_preferences</td>
           <td class="no">—</td>
-          <td class="yes">web_search.search (conditional)</td>
+          <td class="yes"><span class="tool-badge">WEB</span> web_search.search (conditional)</td>
           <td class="no">—</td>
         </tr>
         <tr>
@@ -518,53 +538,159 @@
           <td>insert_chat_message, upsert_user_preferences</td>
           <td class="no">—</td>
           <td class="no">—</td>
-          <td>SSE streaming, token emission</td>
+          <td>SSE streaming, token emission, text sanitization</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- SECTION 4: LLM & FALLBACK CHAIN                                       -->
-  <!-- ==================================================================== -->
+  <!-- ================================================================ -->
+  <!-- SECTION 4: LLM & FALLBACK CHAIN                                  -->
+  <!-- ================================================================ -->
   <h2>4. LLM Fallback Chain</h2>
-  <p>Every LLM call goes through a <strong>3-tier FallbackLLM</strong> class. If Groq fails, it falls back to OpenRouter.</p>
+  <p>
+    Every LLM call goes through a <strong>5-tier FallbackLLM</strong> class.
+    It tries providers in order until one succeeds. Groq is the primary (fastest inference),
+    with two API keys and two model options; OpenRouter is the secondary fallback
+    with its own two API keys.
+  </p>
 
   <div class="diagram-wrapper">
     <pre class="mermaid">
       flowchart LR
         REQ[LLM Request] --> GROQ1["Groq (Primary)
         ChatGroq
-        openai/gpt-oss-120b"]
+        openai/gpt-oss-120b
+        key: groq_api_key"]
 
         GROQ1 -->|"success"| RES[Response]
         GROQ1 -->|"error / rate limit"| GROQ2["Groq Failover
         ChatGroq
-        (backup API key)"]
+        openai/gpt-oss-120b
+        key: groq_api_key_fallback"]
 
         GROQ2 -->|"success"| RES
-        GROQ2 -->|"error / rate limit"| OR["OpenRouter
+        GROQ2 -->|"error / rate limit"| GROQ3["Groq Failover 2
+        ChatGroq
+        gemma2-9b-it
+        key: groq_api_key_fallback2"]
+
+        GROQ3 -->|"success"| RES
+        GROQ3 -->|"error / rate limit"| OR1["OpenRouter (Primary)
         Custom HTTP Client
         nemotron-3-nano-omni
-        3-attempt retry
-        exp backoff"]
+        key: openrouter_api_key
+        3-retry exp backoff"]
 
-        OR -->|"success"| RES
-        OR -->|"all failed"| ERR["Raise Exception"]
+        OR1 -->|"success"| RES
+        OR1 -->|"error / rate limit"| OR2["OpenRouter (Alt key)
+        Custom HTTP Client
+        nemotron-3-nano-omni
+        key: openrouter_api_key_fallback
+        3-retry exp backoff"]
+
+        OR2 -->|"success"| RES
+        OR2 -->|"all failed"| ERR["Raise RuntimeError
+        'All LLM providers unavailable'"]
 
         style REQ fill:#3b82f6,color:#fff,stroke:none
         style RES fill:#22c55e,color:#fff,stroke:none
         style ERR fill:#ef4444,color:#fff,stroke:none
         style GROQ1 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
         style GROQ2 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
-        style OR fill:#1a1d27,stroke:#f59e0b,color:#e4e6f0
+        style GROQ3 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
+        style OR1 fill:#1a1d27,stroke:#f59e0b,color:#e4e6f0
+        style OR2 fill:#1a1d27,stroke:#f59e0b,color:#e4e6f0
     </pre>
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- SECTION 5: DFD — DATA FLOW DIAGRAM                                    -->
-  <!-- ==================================================================== -->
-  <h2>5. Data Flow Diagram (DFD)</h2>
+  <h3>Provider Details</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Tier</th>
+        <th>Provider</th>
+        <th>Model</th>
+        <th>Key Source</th>
+        <th>Timeout</th>
+        <th>Retry</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1 (Primary)</td>
+        <td>Groq</td>
+        <td><code>openai/gpt-oss-120b</code></td>
+        <td><code>groq_api_key</code></td>
+        <td>15s</td>
+        <td>Provider-level retry</td>
+      </tr>
+      <tr>
+        <td>2 (Failover)</td>
+        <td>Groq</td>
+        <td><code>openai/gpt-oss-120b</code></td>
+        <td><code>groq_api_key_fallback</code></td>
+        <td>15s</td>
+        <td>Provider-level retry</td>
+      </tr>
+      <tr>
+        <td>3 (Failover 2)</td>
+        <td>Groq</td>
+        <td><code>gemma2-9b-it</code></td>
+        <td><code>groq_api_key_fallback2</code></td>
+        <td>15s</td>
+        <td>Provider-level retry</td>
+      </tr>
+      <tr>
+        <td>4 (Fallback)</td>
+        <td>OpenRouter</td>
+        <td><code>nvidia/nemotron-3-nano-omni-30b</code></td>
+        <td><code>openrouter_api_key</code></td>
+        <td>20s</td>
+        <td>3 attempts, exp backoff (2s, 4s, 8s)</td>
+      </tr>
+      <tr>
+        <td>5 (Fallback alt)</td>
+        <td>OpenRouter</td>
+        <td><code>nvidia/nemotron-3-nano-omni-30b</code></td>
+        <td><code>openrouter_api_key_fallback</code></td>
+        <td>20s</td>
+        <td>3 attempts, exp backoff (2s, 4s, 8s)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 5: CHAT MEMORY & PERSISTENCE                             -->
+  <!-- ================================================================ -->
+  <h2>5. Chat Memory &amp; Persistence</h2>
+  <p>
+    Conversation memory uses <strong>PostgreSQL</strong> for long-term persistence and
+    <strong>MemorySaver</strong> (in-memory) for LangGraph checkpoints during active sessions.
+  </p>
+
+  <h3>Tables</h3>
+  <ul>
+    <li><code>chat_sessions</code> — session_token, user_id, context_ad_id, last_active</li>
+    <li><code>chat_messages</code> — session_token, role (user/assistant), content, node_used, referenced_ad_ids[]</li>
+    <li><code>user_preferences</code> — session_token, budget_min/max, preferred_brands[], body_types[], fuel_types[], transmission, cities[], max_km_driven, year_min/max, use_case, is_seller, seller_*, intent_history[], turn_count</li>
+  </ul>
+
+  <h3>Memory Flow</h3>
+  <ol>
+    <li><strong>On request:</strong> all prior messages loaded from <code>chat_messages</code> via <code>get_chat_history()</code> — no LIMIT, all messages for the session. Preferences loaded from <code>user_preferences</code>.</li>
+    <li><strong>LLM context:</strong> nodes only include the last 6 messages (<code>history_msgs[-6:]</code>) in system prompts to fit within context windows.</li>
+    <li><strong>On response:</strong> user message + assistant response inserted into <code>chat_messages</code> (fire-and-forget via <code>asyncio.ensure_future</code>).</li>
+    <li><strong>Session restore:</strong> frontend calls <code>GET /history/{session_token}</code> on mount to reload past messages from DB.</li>
+  </ol>
+
+  <h3>Session Token</h3>
+  <p>Generated by <code>POST /chat/session</code>, stored in <code>localStorage</code> on the frontend, and sent with every <code>/message</code> request. Persists across page refreshes and browser restarts.</p>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 6: CHATBOT DATA FLOW (DFD)                              -->
+  <!-- ================================================================ -->
+  <h2>6. Chatbot Data Flow Diagram (DFD)</h2>
   <p>End-to-end data flow through the chatbot system — from user message to SSE response — showing all external entities, processes, data stores, and data flows.</p>
 
   <div class="diagram-wrapper">
@@ -619,14 +745,14 @@
           LLM Inference]
           OR_API[OpenRouter API
           LLM Fallback]
-          TAV[Tavily API
+          DDG[DuckDuckGo
           Web Search]
         end
 
         USER -->|"POST /message
         {text, session_token}"| CHAT
         CHAT -->|"HTTP POST"| BE
-        BE -->|"proxy"| CB
+        BE -->|"proxy /api/v1/chat"| CB
         CB --> INVOKE
         INVOKE -->|"rebuild state
         from DB"| PG
@@ -657,16 +783,16 @@
 
         ADV -->|"grounding_block"| PG
         ADV -->|"similar_cars"| QDR
-        ADV -->|"web_search"| TAV
+        ADV -->|"web_search"| DDG
         ADV --> RESP
 
         SELL -->|"market_search"| QDR
         SELL -->|"price_compute"| MEM
-        SELL -->|"web_search"| TAV
+        SELL -->|"web_search"| DDG
         SELL --> RESP
 
         GUIDE --> RESP
-        GEN -->|"web_search"| TAV
+        GEN -->|"web_search"| DDG
         GEN --> RESP
 
         RESP -->|"insert_message"| PG
@@ -699,7 +825,7 @@
         style MEM fill:#22c55e,color:#fff,stroke:#16a34a
         style GROQ_API fill:#8b5cf6,color:#fff,stroke:none
         style OR_API fill:#8b5cf6,color:#fff,stroke:none
-        style TAV fill:#f59e0b,color:#fff,stroke:none
+        style DDG fill:#f59e0b,color:#fff,stroke:none
 
         style CHAT fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
         style SSE fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
@@ -711,10 +837,10 @@
     </pre>
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- SECTION 6: SSE EVENT DATA FLOW                                       -->
-  <!-- ==================================================================== -->
-  <h2>6. SSE Event Stream (responder_node → Frontend)</h2>
+  <!-- ================================================================ -->
+  <!-- SECTION 7: SSE EVENT STREAM                                      -->
+  <!-- ================================================================ -->
+  <h2>7. SSE Event Stream (responder_node → Frontend)</h2>
   <p>Sequence of events emitted by the responder_node over a single SSE connection during a request.</p>
 
   <div class="diagram-wrapper">
@@ -735,7 +861,7 @@
         Note over C: preference_extractor → router
 
         C->>L: classify intent
-        L-->>C: intent: search_node
+        L-->>C: intent: catalogue_node
 
         Note over C: specialist node executes
 
@@ -746,6 +872,11 @@
           Q-->>C: results
           C->>L: generate intro text
           L-->>C: streamed text
+        else recommendation_node
+          C->>Q: relaxed search (±3yr)
+          Q-->>C: alternatives
+          C->>L: write alternative explanation
+          L-->>C: streamed text
         end
 
         Note over C, F: responder_node streams SSE
@@ -753,17 +884,430 @@
         C-->>F: event: status {"Searching..."}
         C-->>F: event: token {"word"}
         C-->>F: event: token {"word"}
-        C-->>F: event: cars [...]
-        C-->>F: event: new_match [...]
+        C-->>F: event: cars [{ad...}, {ad...}]
+        C-->>F: event: new_match [{ad...}]
+        C-->>F: event: similar_cars [{ad...}]
         C-->>F: event: done
 
-        F->>U: Render messages & cars
+        F->>U: Render messages & car cards
     </pre>
   </div>
 
-  <!-- ==================================================================== -->
-  <!-- FOOTER                                                               -->
-  <!-- ==================================================================== -->
+  <!-- ================================================================ -->
+  <!-- NEW SECTION 8: COMPARISON ANALYSIS                              -->
+  <!-- ================================================================ -->
+  <h2>8. Comparison Analysis Service</h2>
+  <p>
+    A separate microservice (<strong>FastAPI</strong> on port 8002) that performs deep,
+    multi-step AI analysis comparing 2–3 car ads side-by-side. Users trigger it from the
+    frontend by selecting ads in the <code>CompareTray</code> and clicking "Compare Now"
+    or navigating to <code>/compare</code>.
+  </p>
+
+  <h3>Pipeline Architecture</h3>
+  <p>The comparison pipeline runs 5 stages sequentially, streaming progress via SSE:</p>
+
+  <div class="diagram-wrapper">
+    <pre class="mermaid">
+      flowchart LR
+        START(["Compare Request
+        {ad_ids: [...]}"]) --> FETCH
+
+        subgraph PIPELINE["Comparison Pipeline"]
+          FETCH["1. FETCH
+          Load ad details
+          from PostgreSQL"]
+          RESEARCH["2. RESEARCH
+          Concurrent Tavily
+          web search per car"]
+          ANALYZE["3. ANALYZE
+          Per-car LLM analysis
+          (OpenRouter → Groq)"]
+          COMPARE["4. COMPARE
+          Head-to-head LLM
+          comparison + verdict"]
+          BUILD["5. BUILD REPORT
+          Assemble report
+          + cache result"]
+        end
+
+        FETCH --> RESEARCH
+        RESEARCH --> ANALYZE
+        ANALYZE --> COMPARE
+        COMPARE --> BUILD
+        BUILD --> DONE(["SSE Events:
+        status → progress 
+        → report → done"])
+
+        subgraph DATA["Data Stores"]
+          PG[(PostgreSQL Supabase)]
+        end
+
+        subgraph LLM["LLM Providers"]
+          OR[OpenRouter
+          120s timeout
+          3-attempt retry]
+          GROQ[Groq
+          ChatGroq
+          openai/gpt-oss-120b]
+        end
+
+        subgraph WEB["Web Research"]
+          TAV[Tavily API
+          5 results per car]
+        end
+
+        FETCH -->|"SQL: SELECT * FROM ads
+        WHERE id IN (...)"| PG
+
+        RESEARCH -->|"tavily.search()
+        brand + model + year"| TAV
+
+        ANALYZE -.->|"OpenRouterChat
+        → fallback ChatGroq"| LLM
+
+        COMPARE -.->|"OpenRouterChat
+        → fallback ChatGroq"| LLM
+
+        style START fill:#3b82f6,color:#fff,stroke:none
+        style DONE fill:#22c55e,color:#fff,stroke:none
+        style FETCH fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style RESEARCH fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style ANALYZE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style COMPARE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style BUILD fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style PG fill:#22c55e,color:#fff,stroke:#16a34a
+        style OR fill:#8b5cf6,color:#fff,stroke:none
+        style GROQ fill:#8b5cf6,color:#fff,stroke:none
+        style TAV fill:#f59e0b,color:#fff,stroke:none
+    </pre>
+  </div>
+
+  <h3>Stage Details</h3>
+
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Stage</th>
+        <th>File</th>
+        <th>What Happens</th>
+        <th>LLM Calls</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. FETCH</strong></td>
+        <td><code>runner.py</code></td>
+        <td>Loads all ad data from PostgreSQL (<code>ads</code> + <code>ad_images</code> tables) for the requested ad_ids. Validates that the ads exist and are active.</td>
+        <td class="no">None</td>
+      </tr>
+      <tr>
+        <td><strong>2. RESEARCH</strong></td>
+        <td><code>runner.py</code></td>
+        <td>For each car, runs a concurrent Tavily web search for <code>"{brand} {model} {year} car review reliability problems"</code>. Returns title + URL + content snippets per car.</td>
+        <td class="no">None (web search only)</td>
+      </tr>
+      <tr>
+        <td><strong>3. ANALYZE</strong></td>
+        <td><code>analyzer.py</code></td>
+        <td>Per-car deep analysis via LLM. Extracts structured JSON: pros/cons, scores (value, reliability, running cost, resale, overall), market context, reliability summary, best_for persona, red flags, spare parts availability, service center coverage. Uses <code>_clean_json()</code> with retry on parse failure.</td>
+        <td class="yes">1–2× per car (OpenRouter → Groq fallback)</td>
+      </tr>
+      <tr>
+        <td><strong>4. COMPARE</strong></td>
+        <td><code>comparator.py</code></td>
+        <td>Single LLM call with all car analyses concatenated. Produces: head-to-head category winners, score comparison table, key differences, verdict (winner + confidence + reasoning), buyer persona matching, and final recommendation.</td>
+        <td class="yes">1–2× total (OpenRouter → Groq fallback)</td>
+      </tr>
+      <tr>
+        <td><strong>5. BUILD</strong></td>
+        <td><code>report_builder.py</code></td>
+        <td>Assembles the final <code>ComparisonReport</code> dict. Caches result in <code>app.state.report_cache</code> keyed by sorted ad_ids. Yields SSE <code>report</code> event, then <code>done</code>.</td>
+        <td class="no">None</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>ComparisonReport Schema</h3>
+  <div class="diagram-wrapper">
+    <pre><code>{
+  report_id:          uuid,
+  generated_at:       ISO datetime,
+  cars_count:         2 | 3,
+  cars: [{
+    ad_id, brand, model, year, price, condition,
+    cover_image_url,
+    pros: [str], cons: [str],
+    scores: { value_for_money, reliability, running_cost, resale_value, overall },
+    photo_analysis: str,
+    market_context: str,
+    reliability_summary: str,
+    best_for: str,
+    red_flags: [str],
+    spare_parts_availability: "good" | "fair" | "poor",
+    service_centers_egypt: "good" | "fair" | "poor",
+  }],
+  head_to_head: {
+    best_value: ad_id,
+    most_reliable: ad_id,
+    lowest_running_cost: ad_id,
+    best_resale: ad_id,
+  },
+  score_comparison: [{ category, scores: { ad_id: number } }],
+  key_differences: [str],
+  verdict: {
+    winner_ad_id, confidence: "high"|"medium"|"low",
+    reasoning, runner_up_ad_id, runner_up_reasoning,
+  },
+  buyer_persona_match: [{ persona, best_match_ad_id, reason }],
+  final_recommendation: str,
+  research_sources: [{ ad_id, brand, model, sources: [{ title, url }] }],
+}</code></pre>
+  </div>
+
+  <h3>SSE Events</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Event Type</th>
+        <th>Content</th>
+        <th>When</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>status</code></td>
+        <td>String: "Loading car details...", "Researching BMW 320i...", etc.</td>
+        <td>Start of each stage</td>
+      </tr>
+      <tr>
+        <td><code>progress</code></td>
+        <td><code>{ current: number, total: number, label: string }</code></td>
+        <td>During analysis (per car)</td>
+      </tr>
+      <tr>
+        <td><code>report</code></td>
+        <td>Full <code>ComparisonReport</code> JSON object</td>
+        <td>After build completes</td>
+      </tr>
+      <tr>
+        <td><code>done</code></td>
+        <td><code>null</code></td>
+        <td>Signals stream end</td>
+      </tr>
+      <tr>
+        <td><code>error</code></td>
+        <td>Error message string</td>
+        <td>On pipeline failure</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>LLM Configuration</h3>
+  <p>
+    The Comparison Analysis uses its own LLM stack, separate from the Chatbot:
+  </p>
+  <ul>
+    <li><strong>Primary:</strong> <code>OpenRouterChat</code> — custom <code>BaseChatModel</code> subclass with 120s timeout, 3-attempt retry with exponential backoff, model <code>nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free</code>.</li>
+    <li><strong>Fallback:</strong> <code>ChatGroq</code> — model <code>openai/gpt-oss-120b</code>, key from <code>groq_api_key</code>.</li>
+    <li><strong>Web search:</strong> <code>TavilyWrapper</code> — 5 results per car, used only for research stage.</li>
+  </ul>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 9: LANGSMITH TRACING                                    -->
+  <!-- ================================================================ -->
+  <h2>9. LangSmith Tracing</h2>
+  <p>
+    All LLM calls across both services are traced to <strong>LangSmith</strong> for observability.
+    Environment variables are loaded at service startup via <code>python-dotenv</code>
+    and set in <code>os.environ</code> before any LangChain imports.
+  </p>
+
+  <h3>Configuration</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>LANGCHAIN_TRACING_V2</code></td>
+        <td><code>true</code></td>
+      </tr>
+      <tr>
+        <td><code>LANGCHAIN_API_KEY</code></td>
+        <td><code>lsv2_pt_...</code></td>
+      </tr>
+      <tr>
+        <td><code>LANGCHAIN_PROJECT</code></td>
+        <td><code>genzcars</code></td>
+      </tr>
+      <tr>
+        <td><code>LANGCHAIN_ENDPOINT</code></td>
+        <td><code>https://api.smith.langchain.com</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>What Gets Traced</h3>
+  <ul>
+    <li><strong>Graph runs</strong> — each <code>graph.astream()</code> call creates a top-level trace</li>
+    <li><strong>Node executions</strong> — each graph node is a child span, named by its function name</li>
+    <li><strong>LLM calls</strong> — every <code>ainvoke()</code> and <code>astream()</code> call, showing prompt, response, token counts, latency</li>
+    <li><strong>Tool calls</strong> — DB queries, vector search, web search calls are captured as nested spans</li>
+  </ul>
+
+  <h3>Trace Tree Example</h3>
+  <pre><code>graph.astream  (top-level trace, name="LangGraph")
+├── preference_extractor
+│   └── FallbackLLM.ainvoke  (prompt tokens: ~250, completion: ~90)
+├── router
+│   └── FallbackLLM.ainvoke  (prompt tokens: ~400, completion: ~15)
+├── catalogue_node
+│   └── FallbackLLM.ainvoke  (prompt tokens: ~350, completion: ~60)
+├── search_node
+│   ├── FallbackLLM.ainvoke  (query builder, tokens: ~200 + ~80)
+│   ├── embedder.encode      (vector embedding call)
+│   ├── qdrant_search.search (vector DB query)
+│   └── FallbackLLM.astream  (response generation, tokens: ~250 + ~150)
+└── responder_node           (no LLM call, only SSE + DB persistence)</code></pre>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 10: DEPLOYMENT                                          -->
+  <!-- ================================================================ -->
+  <h2>10. Deployment</h2>
+  <p>All services run in Docker containers orchestrated by <code>docker-compose.yml</code> with an Nginx reverse proxy.</p>
+
+  <h3>Service Map</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Container</th>
+        <th>Internal Port</th>
+        <th>Nginx Route</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Frontend (Next.js)</td>
+        <td><code>frontend</code></td>
+        <td>:3000</td>
+        <td><code>/</code></td>
+      </tr>
+      <tr>
+        <td>Backend API</td>
+        <td><code>backend</code></td>
+        <td>:8000</td>
+        <td><code>/api/</code></td>
+      </tr>
+      <tr>
+        <td>Chatbot</td>
+        <td><code>chatbot</code></td>
+        <td>:8001</td>
+        <td><code>/api/v1/chat/</code></td>
+      </tr>
+      <tr>
+        <td>Comparison Analysis</td>
+        <td><code>comparison</code></td>
+        <td>:8002</td>
+        <td><code>/api/v1/compare</code></td>
+      </tr>
+      <tr>
+        <td>Reverse Proxy</td>
+        <td><code>nginx</code></td>
+        <td>:80</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Nginx Routing Rules</h3>
+  <div class="diagram-wrapper">
+    <pre><code>location /api/v1/chat/ { proxy_pass http://chatbot; }    # :8001
+location /api/v1/compare { proxy_pass http://comparison; } # :8002
+location /api/           { proxy_pass http://backend; }     # :8000
+location /               { proxy_pass http://frontend; }    # :3000</code></pre>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 11: FRONTEND COMPONENTS                                 -->
+  <!-- ================================================================ -->
+  <h2>11. Frontend Architecture</h2>
+  <p>Next.js app with App Router, Zustand for state, Framer Motion for animations.</p>
+
+  <h3>Key Components</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>File</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ChatPage</code></td>
+        <td><code>components/chat/ChatPage.tsx</code></td>
+        <td>Main chat UI with sidebar, conversation starters</td>
+      </tr>
+      <tr>
+        <td><code>ChatMessages</code></td>
+        <td><code>components/chat/ChatMessages.tsx</code></td>
+        <td>Renders messages: text, car cards, price analysis, status</td>
+      </tr>
+      <tr>
+        <td><code>ChatCarCard</code></td>
+        <td><code>components/chat/ChatCarCard.tsx</code></td>
+        <td>Car card with image, price, city, View Ad + Compare buttons</td>
+      </tr>
+      <tr>
+        <td><code>ChatInput</code></td>
+        <td><code>components/chat/ChatInput.tsx</code></td>
+        <td>Text input + voice recording</td>
+      </tr>
+      <tr>
+        <td><code>CompareTray</code></td>
+        <td><code>components/layout/CompareTray.tsx</code></td>
+        <td>Sticky bottom tray for selected compare ads</td>
+      </tr>
+      <tr>
+        <td><code>VerdictCard</code></td>
+        <td><code>components/compare/VerdictCard.tsx</code></td>
+        <td>Winner display with confidence</td>
+      </tr>
+      <tr>
+        <td><code>ScoreRadar</code></td>
+        <td><code>components/compare/ScoreRadar.tsx</code></td>
+        <td>Radar chart for per-car scores</td>
+      </tr>
+      <tr>
+        <td><code>HeadToHeadTable</code></td>
+        <td><code>components/compare/HeadToHeadTable.tsx</code></td>
+        <td>Side-by-side spec comparison</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>State Management (Zustand Stores)</h3>
+  <ul>
+    <li><code>chatStore</code> — messages[], isStreaming, sessionToken, contextAdId, appendToken()</li>
+    <li><code>compareStore</code> — selectedAdIds[], addAd(), removeAd(), isSelected() — persisted to sessionStorage</li>
+  </ul>
+
+  <h3>SSE Integration</h3>
+  <ul>
+    <li><code>SSEParser</code> (<code>lib/sse.ts</code>) — generic SSE parser: connects via POST, reads response body as stream, parses <code>data: {...}</code> lines, dispatches typed events</li>
+    <li><code>useSSE</code> (<code>hooks/useSSE.ts</code>) — React wrapper with start/stop lifecycle</li>
+    <li><code>useChat</code> (<code>hooks/useChat.ts</code>) — orchestrates chat SSE: dispatches token→appendToken, cars→addMessage, price_analysis→addMessage, etc.</li>
+    <li><code>useCompare</code> (<code>hooks/useCompare.ts</code>) — orchestrates comparison SSE: status→update, progress→update, report→setReport, done→navigate</li>
+  </ul>
+
+  <!-- ================================================================ -->
+  <!-- FOOTER                                                           -->
+  <!-- ================================================================ -->
   <hr style="border-color:var(--border);margin:3rem 0 1rem;">
   <p style="text-align:center;font-size:0.8rem;">
     Cars Marketplace Egypt — DEPI Final Project 2026 &bull; Multi-Agent Architecture Document
