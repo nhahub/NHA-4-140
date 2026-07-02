@@ -1,6 +1,6 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, File, UploadFile, Form
+from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 import asyncpg
 import httpx
@@ -106,6 +106,35 @@ async def send_message(
             "Connection": "keep-alive",
         },
     )
+
+
+@router.post("/stt")
+async def proxy_stt(audio: UploadFile = File(...)):
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        resp = await client.post(
+            f"{CHATBOT_URL}/voice/stt",
+            files={"audio": (audio.filename or "audio.webm", await audio.read(), audio.content_type or "audio/webm")},
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail=resp.text[:500])
+        return resp.json()
+
+
+@router.post("/tts")
+async def proxy_tts(request: Request):
+    body = await request.json()
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            f"{CHATBOT_URL}/voice/tts",
+            json=body,
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail=resp.text[:500])
+        return Response(
+            content=resp.content,
+            media_type=resp.headers.get("content-type", "audio/mpeg"),
+            headers={"X-Voice-Language": resp.headers.get("x-voice-language", "en")},
+        )
 
 
 @router.get("/history/{session_token}")

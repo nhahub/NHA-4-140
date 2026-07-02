@@ -13,6 +13,7 @@ from app.core.qdrant import QdrantSearch
 from app.core.web_search import WebSearch
 from app.graph.builder import build_graph
 from app.routers import chat as chat_router
+from app.voice import router as voice_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -137,6 +138,7 @@ app = FastAPI(
 )
 
 app.include_router(chat_router.router)
+app.include_router(voice_router.router)
 
 
 @app.get("/health")

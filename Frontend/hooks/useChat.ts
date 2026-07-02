@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useChatStore } from '@/store/chatStore'
 import { useSSE } from './useSSE'
+import { useTTS } from './useTTS'
 import { api } from '@/lib/api'
 import type { ChatMessage, ChatHistory } from '@/types/chat'
 
@@ -15,6 +16,9 @@ export function useChat() {
   } = useChatStore()
 
   const { start, stop } = useSSE()
+  const { speak: speakTTS, stop: stopTTS } = useTTS()
+  const responseTextRef = useRef('')
+  const responseLangRef = useRef<string>('en')
 
   // Restore session from localStorage on mount
   useEffect(() => {
@@ -60,8 +64,12 @@ export function useChat() {
     return t
   }, [contextAdId, setSessionToken])
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, language?: string) => {
     if (!text.trim() || isStreaming) return
+
+    stopTTS()
+    responseTextRef.current = ''
+    responseLangRef.current = language || 'en'
 
     const token = sessionToken
       ? sessionToken
@@ -87,6 +95,7 @@ export function useChat() {
           switch (event.type) {
             case 'token':
               appendToken(event.content)
+              responseTextRef.current += event.content
               break
             case 'cars':
               addMessage({
@@ -138,6 +147,11 @@ export function useChat() {
         },
         onDone: () => {
           setStreaming(false)
+          // Speak the accumulated response
+          const responseText = responseTextRef.current.trim()
+          if (responseText) {
+            speakTTS(responseText, responseLangRef.current).catch(() => {})
+          }
         },
         onError: (err) => {
           addMessage({
@@ -149,7 +163,7 @@ export function useChat() {
         },
       }
     )
-  }, [sessionToken, contextAdId, isStreaming])
+  }, [sessionToken, contextAdId, isStreaming, speakTTS, stopTTS])
 
   return { messages, isStreaming, sendMessage, stop }
 }

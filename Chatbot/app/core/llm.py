@@ -69,8 +69,21 @@ class FallbackLLM:
             streaming=streaming,
             max_tokens=2048,
         )
+        self._secondary = None
         self._openrouter = None
         self.streaming = streaming
+
+    @property
+    def secondary(self):
+        if self._secondary is None and settings.groq_api_key_fallback:
+            self._secondary = ChatGroq(
+                model=settings.groq_model,
+                api_key=settings.groq_api_key_fallback,
+                temperature=0 if not self.streaming else 0.3,
+                streaming=self.streaming,
+                max_tokens=2048,
+            )
+        return self._secondary
 
     @property
     def fallback(self):
@@ -87,7 +100,14 @@ class FallbackLLM:
         try:
             return await self.primary.ainvoke(messages, **kwargs)
         except Exception as e:
-            logger.warning("Groq failed (%s: %s), falling back to OpenRouter", type(e).__name__, str(e)[:200])
+            logger.warning("Primary Groq failed (%s: %s)", type(e).__name__, str(e)[:200])
+            if self.secondary:
+                try:
+                    logger.info("Trying fallback Groq key...")
+                    return await self.secondary.ainvoke(messages, **kwargs)
+                except Exception as e2:
+                    logger.warning("Fallback Groq also failed (%s: %s)", type(e2).__name__, str(e2)[:200])
+            logger.warning("Falling back to OpenRouter")
             return await self.fallback.ainvoke(messages, **kwargs)
 
     async def astream(self, messages, **kwargs):
@@ -95,7 +115,16 @@ class FallbackLLM:
             async for chunk in self.primary.astream(messages, **kwargs):
                 yield chunk
         except Exception as e:
-            logger.warning("Groq stream failed (%s: %s), falling back to OpenRouter", type(e).__name__, str(e)[:200])
+            logger.warning("Primary Groq stream failed (%s: %s)", type(e).__name__, str(e)[:200])
+            if self.secondary:
+                try:
+                    logger.info("Trying fallback Groq key for stream...")
+                    async for chunk in self.secondary.astream(messages, **kwargs):
+                        yield chunk
+                    return
+                except Exception as e2:
+                    logger.warning("Fallback Groq stream also failed (%s: %s)", type(e2).__name__, str(e2)[:200])
+            logger.warning("Falling back to OpenRouter")
             result = await self.fallback.ainvoke(messages, **kwargs)
             content = result.generations[0].message.content if hasattr(result, "generations") else str(result)
             from langchain_core.messages import AIMessageChunk
