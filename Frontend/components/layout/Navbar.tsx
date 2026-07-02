@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Car, PlusCircle, MessageCircle, User, Heart, LogOut } from 'lucide-react'
+import { PlusCircle, MessageCircle, User, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 import { useAuthStore } from '@/store/authStore'
@@ -19,7 +20,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <Car className="w-7 h-7 text-primary-500" />
+              <Image src="/logo.svg" alt="CarsMarket" width={32} height={32} className="shrink-0" />
               <span className="text-lg font-bold text-text-primary">CarsMarket</span>
             </Link>
 

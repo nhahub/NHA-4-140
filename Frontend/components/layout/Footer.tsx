@@ -1,5 +1,5 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import { Car } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <Car className="w-6 h-6 text-primary-500" />
+              <Image src="/logo.svg" alt="CarsMarket" width={28} height={28} />
               <span className="text-lg font-bold text-text-primary">CarsMarket</span>
             </div>
             <p className="text-sm text-text-secondary max-w-md">

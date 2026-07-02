@@ -17,7 +17,8 @@ async def run(request: CompareRequest, app_state) -> AsyncGenerator[dict, None]:
         return
 
     pool = app_state.pool
-    llm = app_state.llm
+    openrouter_llm = app_state.llm
+    groq_llm = app_state.groq_llm
     tavily = app_state.tavily
 
     # Stage 1: Fetch ads
@@ -51,18 +52,25 @@ async def run(request: CompareRequest, app_state) -> AsyncGenerator[dict, None]:
         else:
             processed_results.append(r)
 
-    # Stage 3: Sequential LLM analysis per car
-    car_analyses = []
-    for i, (ad, research) in enumerate(zip(ads, processed_results)):
-        yield {"type": "status", "content": f"Analyzing {ad['brand']} {ad['model']}..."}
+    # Stage 3: Parallel LLM analysis per car
+    yield {"type": "status", "content": f"Analyzing {len(ads)} cars..."}
+
+    async def _analyze_one(ad: dict, research: dict) -> dict | None:
         try:
-            analysis = await analyze_car(ad, research, llm, request.language)
-            car_analyses.append(analysis)
-        except ValueError:
-            yield {"type": "error", "content": f"Analysis failed for {ad['brand']} {ad['model']}. Please try again."}
+            return await analyze_car(ad, research, openrouter_llm, groq_llm, request.language)
+        except Exception:
+            return None
+
+    analysis_tasks = [_analyze_one(ad, research) for ad, research in zip(ads, processed_results)]
+    results = await asyncio.gather(*analysis_tasks)
+
+    car_analyses = []
+    for i, (ad, result) in enumerate(zip(ads, results)):
+        if result is None:
+            yield {"type": "error", "content": f"Analysis failed for {ad['brand']} {ad['model']}."}
             yield {"type": "done", "content": None}
             return
-
+        car_analyses.append(result)
         yield {
             "type": "progress",
             "content": {
@@ -75,8 +83,8 @@ async def run(request: CompareRequest, app_state) -> AsyncGenerator[dict, None]:
     # Stage 4: Single LLM comparison call
     yield {"type": "status", "content": "Writing final verdict..."}
     try:
-        comparison_result = await compare(car_analyses, llm, request.language)
-    except ValueError:
+        comparison_result = await compare(car_analyses, openrouter_llm, groq_llm, request.language)
+    except Exception:
         yield {"type": "error", "content": "Comparison analysis failed. Please try again."}
         yield {"type": "done", "content": None}
         return

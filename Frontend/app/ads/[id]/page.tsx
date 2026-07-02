@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { MapPin, Phone, Heart, Share2, Eye } from 'lucide-react'
+import { MapPin, Phone, Eye } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatPrice, getConditionBadge } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -8,6 +8,10 @@ import { AdImageGallery } from '@/components/ads/AdImageGallery'
 import { AdSpecsTable } from '@/components/ads/AdSpecsTable'
 import CompareButton from '@/components/compare/CompareButton'
 import { AskAiButton } from '@/components/ads/AskAiButton'
+import { AiPriceWidget } from '@/components/ads/AiPriceWidget'
+import { ShareButtons } from '@/components/ads/ShareButtons'
+import { RecentlyViewed } from '@/components/ads/RecentlyViewed'
+import { AdViewTracker } from './AdViewTracker'
 import type { Ad } from '@/types/ad'
 
 interface PageProps {
@@ -110,21 +114,18 @@ export default async function AdDetailPage({ params }: PageProps) {
                 <span className="text-sm font-medium text-text-primary">0100 000 0000</span>
               </div>
 
-              <Button variant="outline" className="w-full gap-2">
-                <Heart className="w-4 h-4" />
-                Save
-              </Button>
+              <AiPriceWidget price={ad.price} brand={ad.brand} model={ad.model} year={ad.year} />
 
               <AskAiButton adId={ad.id} />
 
-              <Button variant="ghost" className="w-full gap-2">
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
+              <ShareButtons ad={ad} />
             </div>
           </div>
         </aside>
       </div>
+
+      <RecentlyViewed />
+      <AdViewTracker ad={ad} />
     </div>
   )
 }

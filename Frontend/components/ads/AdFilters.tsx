@@ -327,6 +327,9 @@ export function AdFilters({ filters, onFilterChange, onReset }: AdFiltersProps) 
           <option value="price_asc">{t('sort_price_asc')}</option>
           <option value="price_desc">{t('sort_price_desc')}</option>
           <option value="most_viewed">{t('sort_views')}</option>
+          <option value="year_desc">Year: Newest</option>
+          <option value="year_asc">Year: Oldest</option>
+          <option value="km_asc">KM: Lowest First</option>
         </select>
       </div>
 

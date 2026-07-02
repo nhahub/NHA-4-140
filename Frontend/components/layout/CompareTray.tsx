@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { X, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/Button'
 import { useCompareStore } from '@/store/compareStore'
 
 export function CompareTray() {
-  const t = useTranslations('compare')
+  const t = useTranslations('Compare')
   const router = useRouter()
+  const pathname = usePathname()
   const { ads, removeAd, clearAll } = useCompareStore()
 
-  if (ads.length === 0) return null
+  if (ads.length === 0 || pathname === '/compare') return null
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-surface-border shadow-lg animate-slide-up">
@@ -42,7 +43,7 @@ export function CompareTray() {
 
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="ghost" size="sm" onClick={clearAll}>
-            {t('add_prompt').split(' ')[0]}
+            {t('startOver')}
           </Button>
           <Button
             size="sm"

@@ -7,6 +7,7 @@ class CarAnalysis(TypedDict):
     model: str
     year: int
     price: float
+    condition: str
     cover_image_url: str
     pros: List[str]
     cons: List[str]

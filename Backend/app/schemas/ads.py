@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import List
 
@@ -51,6 +51,13 @@ class AdCreate(BaseModel):
     price: float
     condition: str
     km_driven: int
+
+    @field_validator("condition")
+    @classmethod
+    def validate_condition(cls, v: str) -> str:
+        if v not in ("new", "used"):
+            raise ValueError("condition must be 'new' or 'used'")
+        return v
     color: str | None = None
     body_type: str
     transmission: str
@@ -68,6 +75,13 @@ class AdUpdate(BaseModel):
     price: float | None = None
     condition: str | None = None
     km_driven: int | None = None
+
+    @field_validator("condition")
+    @classmethod
+    def validate_condition(cls, v: str | None) -> str | None:
+        if v is not None and v not in ("new", "used"):
+            raise ValueError("condition must be 'new' or 'used'")
+        return v
     color: str | None = None
     body_type: str | None = None
     transmission: str | None = None

@@ -7,6 +7,7 @@ from qdrant_client.http import models as qmodels
 
 from app.config import settings
 from app.core.middleware import setup_cors
+from app.core.llm import get_llm
 from app.core.exceptions import (
     NotFoundException,
     UnauthorizedException,
@@ -173,6 +174,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         app.state.embedder = None
         logger.warning("Failed to load embedding model: %s", e)
+
+    try:
+        app.state.llm = get_llm()
+        logger.info("Groq LLM initialized: %s", settings.groq_model)
+    except Exception as e:
+        app.state.llm = None
+        logger.warning("Failed to initialize Groq LLM: %s", e)
+
     yield
     logger.info("Shutting down...")
     if app.state.db:
@@ -286,7 +295,7 @@ async def internal_handler(request: Request, exc: Exception):
     )
 
 
-from app.routers import auth, users, ads, favorites, search, chat, compare
+from app.routers import auth, users, ads, favorites, search, chat, compare, compare_ai
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
@@ -295,6 +304,7 @@ app.include_router(favorites.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(compare.router, prefix="/api/v1")
+app.include_router(compare_ai.router, prefix="/api/v1")
 
 
 @app.get("/health")

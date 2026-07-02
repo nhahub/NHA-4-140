@@ -14,8 +14,8 @@ interface VerdictCardProps {
 export default function VerdictCard({ verdict, cars }: VerdictCardProps) {
   const t = useTranslations('Compare')
 
-  const winner = cars.find((c) => c.carId === verdict.winnerId)
-  const runnerUp = cars.find((c) => c.carId === verdict.runnerUpId)
+  const winner = cars.find((c) => c.ad_id === verdict.winner_ad_id)
+  const runnerUp = cars.find((c) => c.ad_id === verdict.runner_up_ad_id)
 
   if (!winner) return null
 
@@ -30,14 +30,14 @@ export default function VerdictCard({ verdict, cars }: VerdictCardProps) {
           </span>
         </div>
 
-        <h3 className="text-lg font-bold">{winner.carName}</h3>
+        <h3 className="text-lg font-bold">{winner.brand} {winner.model}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {formatPrice(winner.price)}
         </p>
 
         <div className="mt-3 flex items-center gap-2">
           <span className="text-xs text-muted-foreground">{t('confidence')}:</span>
-          <span className="text-sm font-semibold">{verdict.confidence}%</span>
+          <span className="text-sm font-semibold">{verdict.confidence === 'high' ? '90%' : verdict.confidence === 'medium' ? '70%' : '50%'}</span>
         </div>
 
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -45,7 +45,7 @@ export default function VerdictCard({ verdict, cars }: VerdictCardProps) {
         </p>
 
         <Button className="mt-4 w-full" asChild>
-          <a href={`/cars/${winner.carId}`}>{t('viewDetails')}</a>
+          <a href={`/cars/${winner.ad_id}`}>{t('viewDetails')}</a>
         </Button>
       </div>
 
@@ -59,13 +59,13 @@ export default function VerdictCard({ verdict, cars }: VerdictCardProps) {
             </span>
           </div>
 
-          <h4 className="text-base font-semibold">{runnerUp.carName}</h4>
+          <h4 className="text-base font-semibold">{runnerUp.brand} {runnerUp.model}</h4>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {formatPrice(runnerUp.price)}
           </p>
 
           <Button variant="outline" className="mt-3 w-full" asChild>
-            <a href={`/cars/${runnerUp.carId}`}>{t('viewDetails')}</a>
+            <a href={`/cars/${runnerUp.ad_id}`}>{t('viewDetails')}</a>
           </Button>
         </div>
       )}

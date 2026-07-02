@@ -4,6 +4,7 @@ export interface CarAnalysis {
   model: string
   year: number
   price: number
+  condition: string
   cover_image_url: string
   pros: string[]
   cons: string[]
@@ -14,6 +15,7 @@ export interface CarAnalysis {
     resale_value: number
     overall: number
   }
+  photo_analysis: string
   market_context: string
   reliability_summary: string
   best_for: string

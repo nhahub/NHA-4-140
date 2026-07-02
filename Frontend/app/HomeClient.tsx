@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { BrandCards } from '@/components/brands/BrandCards'
+import { FeaturedCars } from '@/components/ads/FeaturedCars'
+import { RecentlyViewed } from '@/components/ads/RecentlyViewed'
 import { AdGridClient } from './AdGridClient'
 import type { Ad } from '@/types/ad'
 
@@ -18,7 +20,9 @@ export function HomeClient({ initialAds }: HomeClientProps) {
         selectedBrand={selectedBrand}
         onBrandSelect={setSelectedBrand}
       />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <FeaturedCars ads={initialAds} />
+      <RecentlyViewed />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <AdGridClient
           initialAds={initialAds}
           selectedBrand={selectedBrand}

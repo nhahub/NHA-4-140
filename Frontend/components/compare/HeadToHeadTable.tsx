@@ -2,7 +2,7 @@
 
 import { CheckCircle, XCircle, Minus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { cn, formatPrice, formatKm } from '@/lib/utils'
+import { cn, formatPrice } from '@/lib/utils'
 import type { CarAnalysis } from '@/types/compare'
 
 interface HeadToHeadTableProps {
@@ -13,18 +13,6 @@ interface RowDef {
   labelKey: string
   getValue: (car: CarAnalysis) => string | number
   compare: (values: (string | number)[]) => number[]
-}
-
-function pickWinners(values: (string | number)[]): number[] {
-  const nums = values.map((v) => {
-    if (typeof v === 'number') return v
-    const parsed = parseFloat(String(v).replace(/[^0-9.]/g, ''))
-    return isNaN(parsed) ? 0 : parsed
-  })
-
-  // Price: lower is better. Everything else: higher is better (or same).
-  // We need to know which row this is. We'll handle via compare function.
-  return []
 }
 
 export default function HeadToHeadTable({ cars }: HeadToHeadTableProps) {
@@ -53,46 +41,18 @@ export default function HeadToHeadTable({ cars }: HeadToHeadTableProps) {
       },
     },
     {
-      labelKey: 'kmDriven',
-      getValue: (c) => formatKm(c.kmDriven),
-      compare: (values) => {
-        const nums = values.map((v) => {
-          if (typeof v === 'number') return v
-          return parseFloat(String(v).replace(/[^0-9.]/g, '')) || 0
-        })
-        const min = Math.min(...nums)
-        return nums.map((n) => (n === min ? 1 : 0))
-      },
-    },
-    {
       labelKey: 'condition',
       getValue: (c) => c.condition,
       compare: (values) => {
-        const rank: Record<string, number> = {
-          Excellent: 5,
-          Good: 4,
-          Fair: 3,
-          Poor: 2,
-          Bad: 1,
-        }
+        const rank: Record<string, number> = { new: 2, used: 1 }
         const nums = values.map((v) => rank[String(v)] ?? 0)
         const max = Math.max(...nums)
         return nums.map((n) => (n === max ? 1 : 0))
       },
     },
     {
-      labelKey: 'fuelType',
-      getValue: (c) => c.fuelType,
-      compare: () => [],
-    },
-    {
-      labelKey: 'transmission',
-      getValue: (c) => c.transmission,
-      compare: () => [],
-    },
-    {
       labelKey: 'spareParts',
-      getValue: (c) => c.sparePartsAvailability ?? '-',
+      getValue: (c) => c.spare_parts_availability ?? '-',
       compare: (values) => {
         const rank: Record<string, number> = {
           Abundant: 3,
@@ -107,7 +67,7 @@ export default function HeadToHeadTable({ cars }: HeadToHeadTableProps) {
     },
     {
       labelKey: 'serviceCenters',
-      getValue: (c) => c.serviceCenterAvailability ?? '-',
+      getValue: (c) => c.service_centers_egypt ?? '-',
       compare: (values) => {
         const rank: Record<string, number> = {
           Many: 3,
@@ -130,7 +90,7 @@ export default function HeadToHeadTable({ cars }: HeadToHeadTableProps) {
             <th className="p-3 text-left font-medium text-muted-foreground" />
             {cars.map((car, idx) => (
               <th
-                key={car.carId}
+                key={car.ad_id}
                 className={cn(
                   'p-3 text-center font-semibold',
                   idx === 0 && 'text-primary-500',
@@ -138,7 +98,7 @@ export default function HeadToHeadTable({ cars }: HeadToHeadTableProps) {
                   idx === 2 && 'text-green-500',
                 )}
               >
-                {car.carName}
+                {car.brand} {car.model}
               </th>
             ))}
           </tr>

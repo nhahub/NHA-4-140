@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Heart, MapPin, Gauge, Fuel, Settings, Trash2, AlertTriangle } from 'lucide-react'
-import { cn, formatPrice, formatKm, formatViews, getConditionBadge } from '@/lib/utils'
+import { cn, formatPrice, formatKm, formatViews, getConditionBadge, BLUR_PLACEHOLDER } from '@/lib/utils'
 import { useCompareStore } from '@/store/compareStore'
 import { api } from '@/lib/api'
 import type { Ad } from '@/types/ad'
@@ -51,11 +51,13 @@ export function AdCard({ ad, editable, onDelete }: AdCardProps) {
     >
       <div className="relative aspect-[16/9] bg-surface-secondary">
         <Image
-          src={ad.cover_image_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22600%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22800%22 height=%22600%22/%3E%3Ctext fill=%22%2394a3b8%22 font-family=%22Arial%22 font-size=%2224%22 x=%22400%22 y=%22300%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'}
+          src={ad.cover_image_url || '/placeholder.svg'}
           alt={`${ad.brand} ${ad.model} ${ad.year}`}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          placeholder="blur"
+          blurDataURL={BLUR_PLACEHOLDER}
         />
         <div className="absolute top-2 left-2 flex gap-1">
           <span

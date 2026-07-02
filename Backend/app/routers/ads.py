@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks, Request, HTTPException
 from typing import List, Optional
 import asyncpg
 import io
@@ -119,6 +119,8 @@ async def create_ad(
     user_id: UUID = Depends(get_current_user),
     request: Request = None,
 ):
+    if condition not in ("new", "used"):
+        raise HTTPException(status_code=422, detail="condition must be 'new' or 'used'")
     if len(files) > MAX_FILES:
         raise FileTooLargeException("Maximum 10 images allowed")
     idempotency_key = request.headers.get("x-idempotency-key")

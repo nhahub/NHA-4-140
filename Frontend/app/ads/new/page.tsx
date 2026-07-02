@@ -7,7 +7,7 @@ export default function NewAdPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-text-primary text-center mb-8">
-        {t('postAd') || 'Post Your Ad'}
+        {t('title') || 'Post Your Ad'}
       </h1>
       <AdForm />
     </div>

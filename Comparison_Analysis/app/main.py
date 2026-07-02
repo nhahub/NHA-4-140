@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.config import settings
 from app.core.llm import get_llm
+from app.core.openrouter import get_openrouter_llm
 from app.core.tavily import TavilyWrapper
 from app.routers import compare as compare_router
 
@@ -21,7 +22,8 @@ async def lifespan(app: FastAPI):
     pool = await asyncpg.create_pool(dsn=dsn, min_size=1, max_size=5)
     app.state.pool = pool
 
-    app.state.llm = get_llm()
+    app.state.llm = get_openrouter_llm()
+    app.state.groq_llm = get_llm()
     app.state.tavily = TavilyWrapper(settings.tavily_api_key)
     app.state.report_cache = {}
 

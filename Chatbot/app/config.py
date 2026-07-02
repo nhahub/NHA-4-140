@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     groq_api_key: str
     groq_model: str = "llama-3.3-70b-versatile"
 
+    openrouter_api_key: str = ""
+    openrouter_model: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+
     database_url: str
 
     qdrant_url: str

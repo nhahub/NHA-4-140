@@ -3,6 +3,7 @@ import { Inter, Cairo } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { Navbar } from '@/components/layout/Navbar'
+import { MobileNav } from '@/components/layout/MobileNav'
 import { Footer } from '@/components/layout/Footer'
 import { ChatBubble } from '@/components/chat/ChatBubble'
 import { ChatDrawer } from '@/components/chat/ChatDrawer'
@@ -16,6 +17,9 @@ export const metadata: Metadata = {
   title: 'CarsMarket Egypt - Find Your Perfect Car',
   description:
     "Egypt's AI-powered car marketplace. Find your perfect car with smart search, compare listings, and get expert advice from our AI assistant.",
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export const viewport: Viewport = {
@@ -35,7 +39,10 @@ export default async function RootLayout({
       <body className="font-sans min-h-screen bg-surface-secondary">
         <NextIntlClientProvider messages={messages}>
           <Navbar />
-          {children}
+          <div className="pb-14 md:pb-0">
+            {children}
+          </div>
+          <MobileNav />
           <Footer />
           <ChatBubble />
           <ChatDrawer />

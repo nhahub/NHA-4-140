@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { ArrowLeft, Trophy, BarChart3, ListChecks, Users, Lightbulb, BookOpen } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
@@ -11,7 +12,8 @@ import VerdictCard from '@/components/compare/VerdictCard'
 import ScoreRadar from '@/components/compare/ScoreRadar'
 import ScoreBar from '@/components/compare/ScoreBar'
 import HeadToHeadTable from '@/components/compare/HeadToHeadTable'
-import { formatPrice } from '@/lib/utils'
+import AIComparisonLoading from '@/components/compare/AIComparisonLoading/AIComparisonLoading'
+import { formatPrice, BLUR_PLACEHOLDER } from '@/lib/utils'
 import type { CarAnalysis } from '@/types/compare'
 
 export default function ComparePage() {
@@ -40,53 +42,30 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">
-          {t('comparisonReport') || 'Comparison Report'}
-        </h1>
-        <Button variant="ghost" size="sm" onClick={reset}>
-          {t('startOver') || 'Start Over'}
-        </Button>
-      </div>
+    <>
+      <AIComparisonLoading
+        isLoading={isLoading}
+        statusText={statusText}
+        progress={progress}
+        onCancel={reset}
+      />
 
-      {isLoading ? (
-        <div className="space-y-8">
-          <div className="flex items-center gap-4 justify-center">
-            {ads.map((ad) => (
-              <div key={ad.id} className="flex flex-col items-center gap-2">
-                <div className="relative w-24 h-16 rounded-lg overflow-hidden bg-surface-secondary">
-                  <Image
-                    src={ad.cover_image_url || ''data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22600%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22800%22 height=%22600%22/%3E%3Ctext fill=%22%2394a3b8%22 font-family=%22Arial%22 font-size=%2224%22 x=%22400%22 y=%22300%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E''}
-                    alt={`${ad.brand} ${ad.model}`}
-                    fill
-                    className="object-cover"
-                    sizes="96px"
-                  />
-                </div>
-                <p className="text-xs font-medium text-text-primary truncate max-w-24 text-center">
-                  {ad.brand} {ad.model}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-text-muted mb-3">{statusText || t('analyzing') || 'Analyzing cars...'}</p>
-            <div className="max-w-md mx-auto bg-surface-secondary rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-primary-500 h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: progress.total > 0
-                    ? `${(progress.current / progress.total) * 100}%`
-                    : '30%',
-                }}
-              />
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-text-primary">
+            {t('comparisonReport') || 'Comparison Report'}
+          </h1>
+          <Button variant="ghost" size="sm" onClick={reset}>
+            {t('startOver') || 'Start Over'}
+          </Button>
         </div>
-      ) : report ? (
-        <>
+
+        {report ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
           <section className="bg-surface rounded-xl border border-surface-border p-6">
             <div className="flex items-center gap-2 mb-4">
               <Trophy className="w-5 h-5 text-primary-500" />
@@ -109,7 +88,7 @@ export default function ComparePage() {
                 <div className="flex items-center gap-3 mb-4">
                   <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-surface-secondary flex-shrink-0">
                     <Image
-                      src={car.cover_image_url || ''data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22600%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22800%22 height=%22600%22/%3E%3Ctext fill=%22%2394a3b8%22 font-family=%22Arial%22 font-size=%2224%22 x=%22400%22 y=%22300%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E''}
+                      src={car.cover_image_url || '/placeholder.svg'}
                       alt={`${car.brand} ${car.model}`}
                       fill
                       className="object-cover"
@@ -118,7 +97,7 @@ export default function ComparePage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-text-primary">{car.brand} {car.model} {car.year}</h3>
-                    <p className="text-sm text-text-muted">{formatPrice(car.price)} EGP</p>
+                    <p className="text-sm text-text-muted">{formatPrice(car.price)} EGP &middot; {car.condition}</p>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -148,6 +127,14 @@ export default function ComparePage() {
                   <h3 className="font-semibold text-text-primary">{car.brand} {car.model}</h3>
                 </div>
                 <div className="space-y-3">
+                  {car.photo_analysis && (
+                    <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                      <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-1">
+                        {t('photoAnalysis') || 'Photo Analysis'}
+                      </h4>
+                      <p className="text-sm text-text-secondary leading-relaxed">{car.photo_analysis}</p>
+                    </div>
+                  )}
                   <div>
                     <h4 className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">{t('pros') || 'Pros'}</h4>
                     <ul className="space-y-1">
@@ -184,7 +171,7 @@ export default function ComparePage() {
               {report.buyer_persona_match.map((match, i) => (
                 <div key={i} className="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg">
                   <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-500 font-bold text-sm flex-shrink-0">
-                    {match.best_match_ad_id[0]?.toUpperCase() || '?'}
+                    {(match.best_match_ad_id?.charAt(0)?.toUpperCase()) || '?'}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-text-primary">{match.persona}</p>
@@ -245,7 +232,7 @@ export default function ComparePage() {
               ))}
             </div>
           </section>
-        </>
+        </motion.div>
       ) : error ? (
         <div className="text-center py-16">
           <p className="text-danger mb-4">{error}</p>
@@ -263,5 +250,6 @@ export default function ComparePage() {
         </div>
       )}
     </div>
+    </>
   )
 }

@@ -21,6 +21,7 @@ export class SSEParser {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
         signal: this.abortController.signal,
+        credentials: 'include',
       })
 
       if (!response.ok) {

@@ -3,7 +3,7 @@ import type { Ad } from '@/types/ad'
 
 interface CompareState {
   ads: Ad[]
-  addAd: (ad: Ad) => void
+  addAd: (ad: Ad) => boolean
   removeAd: (adId: string) => void
   clearAll: () => void
   isSelected: (adId: string) => boolean
@@ -30,11 +30,12 @@ export const useCompareStore = create<CompareState>((set, get) => ({
 
   addAd: (ad) => {
     const { ads } = get()
-    if (ads.length >= 3) return
-    if (ads.some((a) => a.id === ad.id)) return
+    if (ads.length >= 3) return false
+    if (ads.some((a) => a.id === ad.id)) return false
     const updated = [...ads, ad]
     persistAds(updated)
     set({ ads: updated })
+    return true
   },
 
   removeAd: (adId) => {

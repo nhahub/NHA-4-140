@@ -1,9 +1,13 @@
 import json
+import logging
 from langchain_core.messages import SystemMessage, HumanMessage
+
+logger = logging.getLogger(__name__)
 
 COMPARE_SYSTEM = """You are an expert automotive analyst for the Egyptian car market.
 You have analyzed multiple cars individually. Now compare them head-to-head
 and produce a final verdict.
+REASONING SUPPRESSION: Do NOT include any reasoning, explanation, or thinking text. Output ONLY the raw JSON object.
 Return ONLY valid JSON — no markdown, no explanation, no extra text.
 """
 
@@ -85,7 +89,72 @@ COMPARE_HUMAN_TEMPLATE = """Here are the individual analyses for {n} cars being 
 """
 
 
-async def compare(car_analyses: list[dict], llm, language: str = "en") -> dict:
+def _clean_json(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text[3:]
+    if text.startswith("json"):
+        text = text[4:]
+    text = text.strip()
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+    if not text:
+        return text
+
+    # Try raw_decode from each {/[ position; prefer objects over arrays
+    decoder = json.JSONDecoder()
+    candidates = []
+    positions = [i for i, ch in enumerate(text) if ch in ("{", "[")]
+    for start in positions:
+        try:
+            obj, end = decoder.raw_decode(text, start)
+            priority = 2 if text[start] == "{" else 1
+            candidates.append((priority, end - start, text[start:end]))
+        except json.JSONDecodeError:
+            continue
+
+    if candidates:
+        candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return candidates[0][2]
+
+    return text.strip()
+
+
+async def _compare_with_llm(llm, system: str, human: str) -> dict:
+    response = await llm.ainvoke([
+        SystemMessage(content=system),
+        HumanMessage(content=human),
+    ])
+    content = response.content.strip()
+
+    def _ensure_dict(result):
+        if isinstance(result, dict):
+            return result
+        if isinstance(result, list) and len(result) == 1 and isinstance(result[0], dict):
+            return result[0]
+        raise ValueError(f"Expected dict, got {type(result).__name__}")
+
+    try:
+        cleaned = _clean_json(content)
+        return _ensure_dict(json.loads(cleaned))
+    except (json.JSONDecodeError, ValueError, AttributeError) as e:
+        logger.warning("First compare attempt failed: %s | preview: %s", e, content[:200])
+
+    retry_response = await llm.ainvoke([
+        SystemMessage(content=system + "\nCRITICAL: Your previous response contained NO JSON at all. You MUST output ONLY a raw JSON object. Start with { and end with }. NO reasoning, NO explanation, NO markdown, NO text before or after."),
+        HumanMessage(content=human),
+    ])
+    retry_content = retry_response.content.strip()
+    try:
+        cleaned = _clean_json(retry_content)
+        return _ensure_dict(json.loads(cleaned))
+    except (json.JSONDecodeError, ValueError, AttributeError) as e:
+        logger.error("Second compare attempt also failed: %s | content: %s", e, retry_content[:500])
+        raise ValueError("LLM failed to return valid JSON after retry")
+
+
+async def compare(car_analyses: list[dict], primary_llm, fallback_llm, language: str = "en") -> dict:
     lang_instr = ""
     if language == "ar":
         lang_instr = "Respond in Arabic. All text fields in the JSON must be in Arabic.\n\n"
@@ -104,25 +173,9 @@ async def compare(car_analyses: list[dict], llm, language: str = "en") -> dict:
         language_instruction=lang_instr,
     )
 
-    response = await llm.ainvoke([
-        SystemMessage(content=COMPARE_SYSTEM),
-        HumanMessage(content=human_msg),
-    ])
-    content = response.content.strip()
-
     try:
-        cleaned = content.removeprefix("```json").removesuffix("```").strip()
-        return json.loads(cleaned)
-    except (json.JSONDecodeError, AttributeError):
-        pass
-
-    retry_response = await llm.ainvoke([
-        SystemMessage(content=COMPARE_SYSTEM + "\nYour previous response was not valid JSON. Return ONLY the JSON object, nothing else."),
-        HumanMessage(content=human_msg),
-    ])
-    retry_content = retry_response.content.strip()
-    try:
-        cleaned = retry_content.removeprefix("```json").removesuffix("```").strip()
-        return json.loads(cleaned)
-    except (json.JSONDecodeError, AttributeError):
-        raise ValueError("LLM failed to return valid JSON after retry")
+        logger.info("Attempting OpenRouter comparison...")
+        return await _compare_with_llm(primary_llm, COMPARE_SYSTEM, human_msg)
+    except Exception as e:
+        logger.warning("OpenRouter comparison failed (%s: %s), falling back to Groq", type(e).__name__, e)
+        return await _compare_with_llm(fallback_llm, COMPARE_SYSTEM, human_msg)

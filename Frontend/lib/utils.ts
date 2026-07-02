@@ -24,13 +24,14 @@ export function formatViews(count: number): string {
 
 export function getConditionBadge(condition: string): { bg: string; text: string; label: string } {
   const map: Record<string, { bg: string; text: string; label: string }> = {
-    new: { bg: '#dcfce7', text: '#16a34a', label: 'New' },
-    excellent: { bg: '#dbeafe', text: '#1d4ed8', label: 'Excellent' },
-    good: { bg: '#fef9c3', text: '#854d0e', label: 'Good' },
-    fair: { bg: '#fee2e2', text: '#991b1b', label: 'Fair' },
+    new: { bg: '#dbeafe', text: '#1d4ed8', label: 'New' },
+    used: { bg: '#fef9c3', text: '#854d0e', label: 'Used' },
   }
-  return map[condition.toLowerCase()] || map.good
+  return map[condition.toLowerCase()] || map.used
 }
+
+export const BLUR_PLACEHOLDER =
+  'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoCAAEADMDOJaQAA3AA/vuEAAA='
 
 export const BODY_TYPE_ICONS: Record<string, string> = {
   sedan: '🚗',
@@ -43,7 +44,7 @@ export const BODY_TYPE_ICONS: Record<string, string> = {
   wagon: '🚗',
 }
 
-export const CONDITIONS = ['new', 'excellent', 'good', 'fair'] as const
+export const CONDITIONS = ['new', 'used'] as const
 export const FUEL_TYPES = ['petrol', 'diesel', 'electric', 'hybrid'] as const
 export const TRANSMISSIONS = ['automatic', 'manual'] as const
 export const BODY_TYPES = ['sedan', 'suv', 'hatchback', 'pickup', 'coupe', 'van', 'wagon'] as const
