@@ -3,7 +3,7 @@ import { HomeClient } from './HomeClient'
 import { HeroSection } from '@/components/home/HeroSection'
 import type { Ad } from '@/types/ad'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const API_URL = process.env.API_URL || 'http://backend:8000/api/v1'
 
 async function getInitialAds(): Promise<Ad[]> {
   try {

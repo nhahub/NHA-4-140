@@ -10,10 +10,12 @@ from fastapi import FastAPI
 from qdrant_client import QdrantClient
 
 from app.config import settings
-from app.core.llm import get_llm
+from app.core.llm import MultiLLM
 from app.core.embedder import Embedder
 from app.core.qdrant import QdrantSearch
 from app.core.web_search import WebSearch
+from app.core.mcp_client import MCPToolRegistry
+from app.core.mcp.servers import car_search_server, analysis_server
 from app.graph.builder import build_graph
 from app.routers import chat as chat_router
 from app.voice import router as voice_router
@@ -117,10 +119,38 @@ async def lifespan(app: FastAPI):
     qdrant_search = QdrantSearch(qdrant_client)
     app.state.qdrant_search = qdrant_search
 
-    app.state.llm_fast = get_llm(streaming=False)
-    app.state.llm_stream = get_llm(streaming=True)
+    llm = MultiLLM()
+    app.state.llm_router = llm
+    app.state.llm_fast = llm.fast
+    app.state.llm_stream = llm.powerful or llm.fast
 
     app.state.web_search = WebSearch()
+
+    # Initialize in-process MCP servers
+    mcp_registry = MCPToolRegistry()
+
+    # Initialize car-search server
+    car_search_server.init_server(qdrant_search, embedder, pool)
+    car_tools = await car_search_server.list_tools()
+    car_tools_meta = [
+        {"name": t.name if hasattr(t, "name") else t["name"],
+         "inputSchema": t.inputSchema if hasattr(t, "inputSchema") else t["inputSchema"]}
+        for t in car_tools
+    ]
+    mcp_registry.register_in_process("car-search", car_search_server.call_tool, car_tools_meta)
+
+    # Initialize analysis server
+    analysis_server.init_server(qdrant_search, embedder, app.state.web_search)
+    analysis_tools = await analysis_server.list_tools()
+    analysis_tools_meta = [
+        {"name": t.name if hasattr(t, "name") else t["name"],
+         "inputSchema": t.inputSchema if hasattr(t, "inputSchema") else t["inputSchema"]}
+        for t in analysis_tools
+    ]
+    mcp_registry.register_in_process("analysis", analysis_server.call_tool, analysis_tools_meta)
+
+    app.state.mcp_registry = mcp_registry
+    logger.info("MCP registry initialized with %d tools", len(mcp_registry.get_available_tools()))
 
     app.state.graph = build_graph()
     app.state.sse_queues = {}

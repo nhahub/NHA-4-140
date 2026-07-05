@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const BROWSER_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const SERVER_URL = process.env.API_URL || 'http://backend:8000/api/v1'
+const API_URL = typeof window === 'undefined' ? SERVER_URL : BROWSER_URL
 
 class ApiError extends Error {
   status: number

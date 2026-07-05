@@ -29,11 +29,11 @@ class Settings(BaseSettings):
     supabase_brand_images_bucket: str = "brand-images"
     supabase_site_assets_bucket: str = "site-assets"
 
-    comparison_service_url: str = "http://localhost:8002"
+    comparison_service_url: str = "http://comparison:8002"
 
     redis_url: str | None = None
 
-    chatbot_url: str = "http://localhost:8001"
+    chatbot_url: str = "http://chatbot:8001"
 
     environment: str = "development"
     allowed_origins: str = "http://localhost:3000"

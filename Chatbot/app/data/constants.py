@@ -20,6 +20,9 @@ SELLER_MEDIAN_MULTIPLIER_HIGH = 1.1
 SELLER_HIGH_KM_MULTIPLIER_LOW = 0.85
 SELLER_HIGH_KM_MULTIPLIER_HIGH = 1.05
 
+# ---- Preference inference ----
+USE_INFERRED_AS_HARD_FILTER = False  # inferred body types are soft signal only by default
+
 # ---- Response streaming ----
 RESPONDER_TOKEN_DELAY_SECONDS = 0.02
 

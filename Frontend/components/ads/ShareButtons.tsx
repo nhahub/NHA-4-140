@@ -1,7 +1,7 @@
 'use client'
 
 import { Heart, MessageCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
 import type { Ad } from '@/types/ad'
@@ -12,8 +12,12 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ ad }: ShareButtonsProps) {
   const [isSaved, setIsSaved] = useState(false)
+  const [whatsappUrl, setWhatsappUrl] = useState('')
   const shareText = `Check out this ${ad.brand} ${ad.model} ${ad.year} for ${formatPrice(ad.price)} EGP!`
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + window.location.href)}`
+
+  useEffect(() => {
+    setWhatsappUrl(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + window.location.href)}`)
+  }, [shareText])
 
   return (
     <div className="flex gap-2">

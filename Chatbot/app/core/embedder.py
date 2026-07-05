@@ -1,4 +1,6 @@
+import hashlib
 from fastembed import TextEmbedding
+from app.core.cache import embedding_cache
 
 
 class Embedder:
@@ -7,4 +9,10 @@ class Embedder:
         self.model = TextEmbedding(model_name=full_name)
 
     def encode(self, text: str) -> list[float]:
-        return list(self.model.embed([text]))[0].tolist()
+        cache_key = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        cached = embedding_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        vector = list(self.model.embed([text]))[0].tolist()
+        embedding_cache.set(cache_key, vector)
+        return vector

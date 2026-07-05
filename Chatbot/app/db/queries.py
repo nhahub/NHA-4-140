@@ -25,6 +25,12 @@ async def upsert_user_preferences(pool: asyncpg.Pool, session_token: str, user_i
         "seller_intent": prefs.get("seller_intent"),
         "intent_history": prefs.get("intent_history"),
         "turn_count": prefs.get("turn_count", 0),
+        "inferred_body_types": prefs.get("inferred_body_types"),
+        "inferred_min_seats": prefs.get("inferred_min_seats"),
+        "inferred_use_case": prefs.get("inferred_use_case"),
+        "excluded_body_types": prefs.get("excluded_body_types"),
+        "excluded_brands": prefs.get("excluded_brands"),
+        "excluded_models": prefs.get("excluded_models"),
     }
 
     col_names = list(fields.keys())
@@ -36,7 +42,8 @@ async def upsert_user_preferences(pool: asyncpg.Pool, session_token: str, user_i
             f"""
             INSERT INTO user_preferences (session_token, {', '.join(col_names)})
             VALUES ($1::VARCHAR, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10,
-                    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
+                    $22, $23, $24, $25, $26, $27)
             ON CONFLICT (session_token)
             DO UPDATE SET
                 user_id                = EXCLUDED.user_id::uuid,
@@ -58,7 +65,13 @@ async def upsert_user_preferences(pool: asyncpg.Pool, session_token: str, user_i
                 seller_asking_price    = EXCLUDED.seller_asking_price,
                 seller_intent          = EXCLUDED.seller_intent,
                 intent_history         = EXCLUDED.intent_history,
-                turn_count             = EXCLUDED.turn_count
+                turn_count             = EXCLUDED.turn_count,
+                inferred_body_types    = EXCLUDED.inferred_body_types,
+                inferred_min_seats     = EXCLUDED.inferred_min_seats,
+                inferred_use_case      = EXCLUDED.inferred_use_case,
+                excluded_body_types    = EXCLUDED.excluded_body_types,
+                excluded_brands        = EXCLUDED.excluded_brands,
+                excluded_models        = EXCLUDED.excluded_models
             """,
             session_token,
             user_id,
@@ -81,6 +94,12 @@ async def upsert_user_preferences(pool: asyncpg.Pool, session_token: str, user_i
             fields["seller_intent"],
             fields["intent_history"],
             fields["turn_count"],
+            fields["inferred_body_types"],
+            fields["inferred_min_seats"],
+            fields["inferred_use_case"],
+            fields["excluded_body_types"],
+            fields["excluded_brands"],
+            fields["excluded_models"],
         )
 
 

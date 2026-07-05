@@ -32,7 +32,17 @@ async def responder_node(state: CarsChatState, config: RunnableConfig) -> dict:
     sse_queue = config["configurable"].get("sse_queue")
     session_token = state.get("session_token", "")
     node_response = _clean_node_response(state.get("node_response", ""))
+    retrieved = state.get("retrieved_ads", [])
     intent = state.get("intent", "")
+
+    # Global fallback: if no node produced a response and no ads were fetched,
+    # emit a generic message so the user never gets a silent empty response
+    if not node_response and not retrieved:
+        node_response = (
+            "I'm sorry, I wasn't able to find an answer to that. "
+            "Could you try rephrasing your question, or let me know "
+            "what you're looking for?"
+        )
 
     # 1. Emit status event
     status_text = NODE_STATUS_MAP.get(intent, "")

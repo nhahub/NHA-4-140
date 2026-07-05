@@ -6,6 +6,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage, AIMessage
 
+from app.core.cost_tracker import CostTracker
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"])
@@ -27,7 +29,16 @@ async def chat_message(request: ChatRequest, req: Request):
         queue = asyncio.Queue()
         app.state.sse_queues[session_token] = queue
 
+        cost_tracker = CostTracker()
+
         try:
+            # Guardrail: input validation
+            from app.core.guardrails import validate_input
+            is_valid, error_msg = validate_input(request.message)
+            if not is_valid:
+                yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'content': None})}\n\n"
+                return
             # --- History reload ---
             messages_history = []
             preferences = {}
@@ -53,25 +64,36 @@ async def chat_message(request: ChatRequest, req: Request):
                             "use_case", "is_seller", "seller_car_brand",
                             "seller_car_model", "seller_car_year",
                             "seller_asking_price", "seller_intent",
+                            "inferred_body_types", "inferred_min_seats",
+                            "inferred_use_case",
+                            "excluded_body_types", "excluded_brands",
+                            "excluded_models",
                         ]
                         preferences = {k: prefs_row.get(k) for k in pref_keys if k in prefs_row}
                         intent_history = prefs_row.get("intent_history", [])
                         turn_count = prefs_row.get("turn_count", 0)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("History/preference reload failed: %s: %s", type(e).__name__, str(e)[:200])
             # --- End history reload ---
 
             config = {
+                "callbacks": [cost_tracker],
+                "run_name": "LangGraph_Chat",
+                "metadata": {"session_id": session_token},
+                "tags": ["langgraph", "chat"],
                 "configurable": {
                     "thread_id": request.session_token,
+                    "llm_router": getattr(app.state, "llm_router", None),
                     "llm_fast": app.state.llm_fast,
                     "llm_stream": app.state.llm_stream,
+                    "cost_tracker": cost_tracker,
                     "embedder": app.state.embedder,
                     "qdrant_search": app.state.qdrant_search,
                     "db_pool": pool,
                     "sse_queue": queue,
                     "session_start": getattr(app.state, "session_start", None),
                     "web_search": getattr(app.state, "web_search", None),
+                    "mcp_registry": getattr(app.state, "mcp_registry", None),
                 }
             }
 
@@ -108,6 +130,16 @@ async def chat_message(request: ChatRequest, req: Request):
 
             done_count = 0
             while True:
+                # Check for client disconnect
+                if await req.is_disconnected():
+                    logger.info("Client disconnected for session %s, cancelling graph", session_token)
+                    run_task.cancel()
+                    try:
+                        await run_task
+                    except asyncio.CancelledError:
+                        pass
+                    break
+
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=45.0)
                     if event.get("type") == "done":
@@ -120,7 +152,28 @@ async def chat_message(request: ChatRequest, req: Request):
                     yield f"data: {json.dumps({'type': 'error', 'content': 'Request timed out after 45 seconds. Please try a simpler question.'})}\n\n"
                     break
 
-            await run_task
+            if not run_task.done():
+                run_task.cancel()
+                try:
+                    await run_task
+                except asyncio.CancelledError:
+                    pass
+            else:
+                await run_task
+
+            usage_summary = cost_tracker.summary()
+            if usage_summary["total_llm_calls"] > 0:
+                yield f"data: {json.dumps({'type': 'usage_summary', 'content': usage_summary})}\n\n"
+                logger.info(
+                    "Session %s | %d LLM calls | %d tokens (in: %d, out: %d) | cost: $%.6f | avg lat: %.0fms",
+                    session_token[:12],
+                    usage_summary["total_llm_calls"],
+                    usage_summary["total_tokens"],
+                    usage_summary["total_prompt_tokens"],
+                    usage_summary["total_completion_tokens"],
+                    usage_summary["estimated_cost_usd"],
+                    usage_summary["avg_latency_ms"],
+                )
 
         finally:
             app.state.sse_queues.pop(session_token, None)

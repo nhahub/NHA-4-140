@@ -59,11 +59,13 @@ async def send_message(
 ):
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id FROM chat_sessions WHERE session_token = $1",
+            "SELECT id, user_id FROM chat_sessions WHERE session_token = $1",
             body.session_token,
         )
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
+        if user_id is not None and row["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Session does not belong to this user")
         await conn.execute(
             "UPDATE chat_sessions SET last_active = NOW() WHERE session_token = $1",
             body.session_token,
@@ -141,14 +143,17 @@ async def proxy_tts(request: Request):
 async def get_history(
     session_token: str,
     pool: asyncpg.Pool = Depends(get_db),
+    user_id: UUID | None = Depends(get_optional_user),
 ):
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id FROM chat_sessions WHERE session_token = $1",
+            "SELECT id, user_id FROM chat_sessions WHERE session_token = $1",
             session_token,
         )
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
+        if user_id is not None and row["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Session does not belong to this user")
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(f"{CHATBOT_URL}/history/{session_token}")

@@ -8,11 +8,28 @@
 
 ## Quick Start
 
+### Using make (recommended)
+
 ```bash
 cd infra
 make setup       # creates .env from template
 # edit .env and fill in all secrets
 make build       # builds all images + starts containers
+```
+
+### Using docker compose directly
+
+```bash
+# 1. Create .env from template
+copy .env.example .env
+
+# 2. Edit .env and fill in all secrets
+
+# 3. Build and start all services
+docker compose up -d --build
+
+# 4. Stop all services
+docker compose down
 ```
 
 Visit **http://localhost** — the full app should be live.

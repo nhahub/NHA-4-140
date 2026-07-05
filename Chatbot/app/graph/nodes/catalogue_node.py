@@ -45,22 +45,28 @@ def _clean_json(text: str) -> str:
 
 
 async def catalogue_node(state: CarsChatState, config: RunnableConfig) -> dict:
-    llm_fast = config["configurable"]["llm_fast"]
+    llm_router = config["configurable"].get("llm_router")
+    llm_fast = config["configurable"].get("llm_fast")
     pool = config["configurable"].get("db_pool")
+    mcp_registry = config["configurable"].get("mcp_registry")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
     prefs = state.get("preferences", {})
     prefs_json = json.dumps(prefs, ensure_ascii=False, default=str)
 
     # Step 1: LLM extracts exact request
-    response = await llm_fast.ainvoke([
+    messages = [
         SystemMessage(content=EXTRACT_CATALOGUE_SYSTEM.format(
             message=last_message,
             preferences_json=prefs_json,
             brand_origins_prompt=format_brand_origins_prompt(),
         )),
         HumanMessage(content=last_message),
-    ])
+    ]
+    if llm_router:
+        response = await llm_router.ainvoke_task("catalogue_check", messages)
+    else:
+        response = await llm_fast.ainvoke(messages)
 
     try:
         parsed = json.loads(_clean_json(response.content))
@@ -71,8 +77,8 @@ async def catalogue_node(state: CarsChatState, config: RunnableConfig) -> dict:
     is_specific = parsed.get("is_specific", False)
     request_label = parsed.get("request_label", last_message)
 
-    # Step 2: If specific request, query the database with exact metadata
-    if is_specific and exact and pool:
+    # Step 2: If specific request, query via MCP or direct DB
+    if is_specific and exact and (pool or mcp_registry):
         brands = exact.get("brands", [])
         model = exact.get("model")
         year = exact.get("year")
@@ -80,15 +86,24 @@ async def catalogue_node(state: CarsChatState, config: RunnableConfig) -> dict:
 
         available_brands = []
         for brand in brands:
-            from app.db.queries import check_catalogue_availability
-            result = await check_catalogue_availability(
-                pool, brand=brand, model=model, year=year, body_type=body_type,
-            )
-            if result["count"] > 0:
+            result = None
+            if mcp_registry:
+                try:
+                    result = await mcp_registry.call_tool("check_catalogue", {
+                        "brand": brand, "model": model, "year": year, "body_type": body_type,
+                    })
+                except Exception as e:
+                    logger.warning("MCP check_catalogue failed for %s, falling back: %s", brand, e)
+            if not result and pool:
+                from app.db.queries import check_catalogue_availability
+                result = await check_catalogue_availability(
+                    pool, brand=brand, model=model, year=year, body_type=body_type,
+                )
+            if result and result.get("count", 0) > 0:
                 available_brands.append({
                     "brand": brand,
                     "count": result["count"],
-                    "ads": result["ads"],
+                    "ads": result.get("ads", []),
                 })
 
         if available_brands:

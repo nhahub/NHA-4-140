@@ -1,7 +1,10 @@
 import json
+import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from app.graph.state import CarsChatState
+
+logger = logging.getLogger(__name__)
 
 GENERAL_SYSTEM = """You are a knowledgeable car expert assistant for an Egyptian car marketplace.
 You help users with:
@@ -56,6 +59,7 @@ User message: "{message}"""
 
 
 async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
+    llm_router = config["configurable"].get("llm_router")
     llm_fast = config["configurable"]["llm_fast"]
     llm_stream = config["configurable"]["llm_stream"]
     pool = config["configurable"].get("db_pool")
@@ -67,10 +71,14 @@ async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
     web_context = ""
     if web_search:
         try:
-            decide_resp = await llm_fast.ainvoke([
+            decide_msgs = [
                 SystemMessage(content=SEARCH_DECIDE_SYSTEM.format(message=last_message)),
                 HumanMessage(content=last_message),
-            ])
+            ]
+            if llm_router:
+                decide_resp = await llm_router.ainvoke_task("search_decision", decide_msgs)
+            else:
+                decide_resp = await llm_fast.ainvoke(decide_msgs)
             decision = json.loads(
                 decide_resp.content.strip().removeprefix("```json").removesuffix("```").strip()
             )
@@ -78,8 +86,8 @@ async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 results = web_search.search(decision["search_query"])
                 if results:
                     web_context = f"\n\nWeb search results for reference:\n{results}"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Web search decision in general_node failed: %s: %s", type(e).__name__, str(e)[:200])
 
     # Build message history summary
     history_msgs = []
@@ -89,27 +97,37 @@ async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
 
     # Main response (streaming)
     streamed_text = ""
-    async for chunk in llm_stream.astream([
+    response_msgs = [
         SystemMessage(content=GENERAL_SYSTEM.format(
             message_history=message_history,
             message=last_message,
             web_context=web_context,
         )),
         HumanMessage(content=last_message),
-    ]):
-        content = chunk.content if hasattr(chunk, "content") else str(chunk)
-        streamed_text += content
+    ]
+    if llm_router:
+        async for chunk in llm_router.astream_task("general", response_msgs):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            streamed_text += content
+    else:
+        async for chunk in llm_stream.astream(response_msgs):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            streamed_text += content
 
     # Refinement step
     pref_update = {}
     try:
-        pref_response = await llm_fast.ainvoke([
+        pref_msgs = [
             SystemMessage(content=REFINE_SYSTEM.format(
                 message=last_message,
                 preferences_json=json.dumps(state.get("preferences", {}), ensure_ascii=False, default=str),
             )),
             HumanMessage(content=last_message),
-        ])
+        ]
+        if llm_router:
+            pref_response = await llm_router.ainvoke_task("preference_extractor", pref_msgs)
+        else:
+            pref_response = await llm_fast.ainvoke(pref_msgs)
         extracted = json.loads(pref_response.content.strip().removeprefix("```json").removesuffix("```").strip())
         merged = dict(state.get("preferences", {}))
         for key, val in extracted.items():
@@ -137,8 +155,8 @@ async def general_node(state: CarsChatState, config: RunnableConfig) -> dict:
             )
 
         pref_update = {"preferences": merged}
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Preference refinement in general_node failed: %s: %s", type(e).__name__, str(e)[:200])
 
     return {
         "node_response": streamed_text,

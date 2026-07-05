@@ -100,6 +100,12 @@
       background: rgba(234,179,8,0.15); color: var(--amber);
       padding: 1px 6px; border-radius: 3px; font-weight: 500;
     }
+    .mcp-badge {
+      display: inline-block; font-size: 0.65rem;
+      background: rgba(59,130,246,0.15); color: var(--primary);
+      padding: 1px 6px; border-radius: 3px; font-weight: 600;
+      letter-spacing: 0.02em;
+    }
     .tool-matrix {
       width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 1rem 0;
     }
@@ -150,7 +156,7 @@
   </p>
 
   <div class="arch-callout">
-    <strong>Chatbot Service</strong> (:8001) — LangGraph-powered multi-agent chat.<br>
+    <strong>Chatbot Service</strong> (:8001) — LangGraph-powered multi-agent chat with MultiLLM routing, hybrid search, semantic caching, guardrails, client disconnect detection, and MCP (Model Context Protocol) tool abstraction layer.<br>
     <strong>Comparison Analysis</strong> (:8002) — Standalone car comparison pipeline.<br>
     <strong>Backend API</strong> (:8000) — REST API for ads, auth, images, and search.<br>
     <strong>Frontend</strong> (:3000) — Next.js app with chat, compare, and listing pages.
@@ -288,10 +294,10 @@
       <div class="name">preference_extractor <span class="tag">every turn</span></div>
       <div class="desc">Extract and merge all car-preference signals from the user's latest message into accumulated UserPreferences. Runs on every turn before routing. Merges new signals with existing — never clears prior values unless explicitly contradicted.</div>
       <div class="output">→ <code>{"preferences": merged, "turn_count": +1}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.ainvoke()</code> — JSON preference extraction</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.ainvoke_task("preference_extractor", ...)</code> — routed to <strong>fast</strong> model (Groq, low temp, 1024 tokens)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><code>format_brand_origins_prompt()</code> — expand country/region ("German car" → BMW, Mercedes, VW, etc.)</li>
+        <li><span class="tool-badge">MCP</span> <code>expand_brand_origins</code> (analysis server) — expand country/region ("German car" → BMW, Mercedes, VW, etc.)</li>
         <li><code>upsert_user_preferences()</code> — persist to PostgreSQL (fire-and-forget)</li>
       </ul>
       <div class="edges">→ router (fixed edge)</div>
@@ -299,9 +305,9 @@
 
     <div class="node-card">
       <div class="name">router <span class="tag">every turn</span></div>
-      <div class="desc">Intent classifier — decides which specialist node should handle the request. Uses conversation history, context_ad_id, and current preferences. Returns one of 5 node names as a string.</div>
+      <div class="desc">Intent classifier — decides which specialist node should handle the request. Uses conversation history, context_ad_id, and current preferences. Returns one of 5 node names as a string. Responses are <strong>cached</strong> via <code>SemanticCache</code> for identical prompts (2min TTL).</div>
       <div class="output">→ <code>{"next_node": str, "intent": str, "intent_history": [...]}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.ainvoke()</code> — classify into: catalogue_node | advisor_node | seller_node | guide_node | general_node</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.ainvoke_task("router", ...)</code> — routed to <strong>fast</strong> model (Groq, temp=0, 1024tokens, cached)</div>
       <div class="tools-label">Routing Rules</div>
       <ul class="tools">
         <li><strong>catalogue_node:</strong> find, browse, filter, "show me", "recommend", "offer me" (buying intent)</li>
@@ -315,32 +321,32 @@
 
     <div class="node-card">
       <div class="name">catalogue_node</div>
-      <div class="desc">Determines if the request is for a specific known car (brand+model+year) or a broad search. If specific, checks PostgreSQL catalogue for exact matches. Routes to <code>search_node</code> if available, <code>recommendation_node</code> if not.</div>
+      <div class="desc">Determines if the request is for a specific known car (brand+model+year) or a broad search. If specific, checks PostgreSQL catalogue for exact matches via MCP. Routes to <code>search_node</code> if available, <code>recommendation_node</code> if not.</div>
       <div class="output">→ <code>{"catalogue_check": {...}, "next_node": "search_node" | "recommendation_node"}</code></div>
       <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.ainvoke()</code> — extract specific vs broad request</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><code>format_brand_origins_prompt()</code> — brand origin expansion</li>
-        <li><code>check_catalogue_availability()</code> — SQL query to count exact-match ads</li>
+        <li><span class="tool-badge">MCP</span> <code>check_catalogue</code> (car-search server) — SQL query to count exact-match ads via MCP abstraction</li>
+        <li><span class="tool-badge">MCP</span> <code>expand_brand_origins</code> (analysis server) — brand origin expansion</li>
       </ul>
       <div class="edges">→ search_node (available or broad) | recommendation_node (not available)</div>
     </div>
 
     <div class="node-card">
       <div class="name">search_node</div>
-      <div class="desc">Vector-based semantic search against Qdrant. Builds an optimized query via LLM, enriches with preference filters, performs initial search with quality evaluation. If quality is poor, retries with broader query and merges results. Also checks for new listings since session start.</div>
+      <div class="desc"><strong>Hybrid search</strong> (BM25 keyword + vector semantic) against Qdrant via MCP. Builds an optimized query via LLM, enriches with preference filters, performs initial search via MCP <code>search_cars</code> tool with quality evaluation. If quality is poor, retries with broader query and merges results. Embeddings <strong>cached</strong> via <code>SemanticCache</code> (2h TTL). Also checks for new listings since session start.</div>
       <div class="output">→ <code>{"retrieved_ads": [...], "node_response": str}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (query builder) + 1× astream (response generation)</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.ainvoke_task("search", ...)</code> query builder + 1× <code>astream_task("search", ...)</code> response generation — routed to <strong>powerful</strong> model (Groq fallback → OpenRouter → Groq fast)</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><code>format_expansions_prompt()</code> — expand colloquial car terms</li>
-        <li><code>embedder.encode()</code> — text → vector embedding (all-MiniLM-L6-v2)</li>
-        <li><code>qdrant_search.search()</code> — vector search with metadata filters (price, brand, city, fuel, transmission, body)</li>
+        <li><span class="tool-badge">MCP</span> <code>expand_colloquial_terms</code> (analysis server) — expand colloquial car terms</li>
+        <li><code>embedder.encode()</code> — text → vector embedding (all-MiniLM-L6-v2, <strong>cached</strong>)</li>
+        <li><span class="tool-badge">MCP</span> <code>search_cars</code> (car-search server) — <strong>hybrid</strong> search (BM25 keyword + vector + RRF fusion) with metadata filters</li>
         <li><code>verify_results()</code> — filter to active listings only</li>
         <li><code>evaluate_search_quality()</code> — check score thresholds (top_score &gt; 0.7 OR avg &gt; 0.5)</li>
         <li><code>compute_dcg()</code> — Discounted Cumulative Gain for ranking quality</li>
         <li><code>merge_dedup_results()</code> — merge primary + broader results, deduplicate</li>
-        <li><code>get_ad_images_by_ids()</code> — fetch image URLs from <code>ad_images</code> table</li>
+        <li><span class="tool-badge">MCP</span> <code>get_car_images</code> (car-search server) — fetch image URLs via MCP</li>
         <li><code>get_new_matching_ads()</code> — proactive "new listings" since session_created_at</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
@@ -348,30 +354,30 @@
 
     <div class="node-card">
       <div class="name">recommendation_node</div>
-      <div class="desc">When a specific car is NOT available in the catalogue, finds similar alternatives using relaxed search criteria: broader year range (±3 years), same body type and budget range. Generates a conversational response explaining the alternatives.</div>
+      <div class="desc">When a specific car is NOT available in the catalogue, finds similar alternatives using <strong>hybrid search</strong> via MCP with relaxed criteria: broader year range (±3 years), same body type and budget range. Generates a conversational response explaining the alternatives.</div>
       <div class="output">→ <code>{"retrieved_ads": [...], "recommendations": [...], "node_response": str}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>FallbackLLM.astream()</code> — explain alternative suggestions</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.astream_task("recommendation", ...)</code> — routed to <strong>powerful</strong> model</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><code>embedder.encode()</code> — text → vector embedding</li>
-        <li><code>qdrant_search.search()</code> — relaxed search (broader brand range, ±3 years, same body_type/budget)</li>
+        <li><code>embedder.encode()</code> — text → vector embedding (<strong>cached</strong>)</li>
+        <li><span class="tool-badge">MCP</span> <code>search_cars</code> (car-search server) — relaxed <strong>hybrid search</strong> (broader brand range, ±3 years, same body_type/budget)</li>
         <li><code>verify_results()</code> — filter to active listings</li>
-        <li><code>get_ad_images_by_ids()</code> — fetch image URLs from DB</li>
+        <li><span class="tool-badge">MCP</span> <code>get_car_images</code> (car-search server) — fetch image URLs via MCP</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
     <div class="node-card">
       <div class="name">advisor_node</div>
-      <div class="desc">Car expert evaluating a specific listing. Determines which car the user is asking about (via context_ad_id or LLM disambiguation), builds a grounded verification block from listing data, fetches web search for reliability/common issues, generates advice, validates the response against listing data (hallucination guard), and finds similar alternatives.</div>
+      <div class="desc">Car expert evaluating a specific listing. Determines which car the user is asking about (via context_ad_id or LLM disambiguation), builds a grounded verification block from listing data, fetches web search for reliability/common issues, generates advice, validates the response against listing data (hallucination guard), and finds similar alternatives via MCP hybrid search.</div>
       <div class="output">→ <code>{"node_response": str, "similar_ads": [...], "preferences": {...}}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 2× ainvoke (relevance + preference refine) + 1× astream (main advice response)</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 2× <code>MultiLLM.ainvoke_task("advisor", ...)</code> (relevance + preference refine) + 1× <code>astream_task("advisor", ...)</code> (main advice) — routed to <strong>powerful</strong> model</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
         <li><code>build_grounding_block()</code> — create verified listing data block (price, year, km, features)</li>
         <li><code>validate_response()</code> — hallucination check rejecting fabricated prices/years</li>
         <li><span class="tool-badge">WEB</span> <code>web_search.search()</code> — reliability, common issues, reviews for the model</li>
-        <li><code>embedder.encode() + qdrant_search.search()</code> — find up to 3 similar cars (exclude current)</li>
+        <li><span class="tool-badge">MCP</span> <code>find_similar_cars</code> (car-search server) — hybrid search via MCP, exclude current ad</li>
         <li><code>upsert_user_preferences()</code> — persist refined preferences</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
@@ -379,13 +385,12 @@
 
     <div class="node-card">
       <div class="name">seller_node</div>
-      <div class="desc">Handles seller requests: pricing a car (market analysis via Qdrant similar listing prices), listing tips, general selling advice. Computes median price, recommended range, adjusts for high kilometrage. Optionally fetches web market context.</div>
+      <div class="desc">Handles seller requests: pricing a car (market analysis via MCP), listing tips, general selling advice. Computes median price, recommended range, adjusts for high kilometrage. Optionally fetches web market context.</div>
       <div class="output">→ <code>{"node_response": str, "price_analysis": {...}?, "preferences": {...}}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (extract car details) + 1× astream (pricing/tips response)</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.ainvoke_task("seller", ...)</code> (extract details) + 1× <code>astream_task("seller", ...)</code> (pricing/tips) — routed to <strong>powerful</strong> model</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><code>embedder.encode() + qdrant_search.search()</code> — find similar listings (same brand/model, same year range) for market pricing</li>
-        <li>Price computation: median, min/max, recommended range (±15% median), km-driven multiplier adjustments</li>
+        <li><span class="tool-badge">MCP</span> <code>analyze_market_price</code> (analysis server) — Qdrant hybrid search + price computation via MCP (median, min/max, recommended range, km-driven adjustments)</li>
         <li><span class="tool-badge">WEB</span> <code>web_search.search()</code> — optional market context ("BMW 2020 price Egypt 2026")</li>
         <li><code>upsert_user_preferences()</code> — persist seller fields</li>
       </ul>
@@ -394,21 +399,21 @@
 
     <div class="node-card">
       <div class="name">guide_node</div>
-      <div class="desc">Answer how-to questions about using the website: posting an ad, using filters, saving favorites, comparing cars, contacting sellers, managing profile. Uses a curated website features reference.</div>
+      <div class="desc">Answer how-to questions about using the website: posting an ad, using filters, saving favorites, comparing cars, contacting sellers, managing profile. Uses a curated website features reference via MCP. Topic detection is <strong>cached</strong> via <code>SemanticCache</code>.</div>
       <div class="output">→ <code>{"node_response": str}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 1× ainvoke (topic detection) + 1× astream (guide response)</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.ainvoke_task("guide_topic", ...)</code> (topic detection, <strong>cached</strong>) + 1× <code>astream_task("guide", ...)</code> (guide response) — routed to <strong>fast</strong> model</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
-        <li><code>format_website_guide()</code> — generate website features reference text from constants</li>
+        <li><span class="tool-badge">MCP</span> <code>get_website_guide</code> (analysis server) — generate website features reference text from constants</li>
       </ul>
       <div class="edges">→ responder_node (fixed)</div>
     </div>
 
     <div class="node-card">
       <div class="name">general_node</div>
-      <div class="desc">General car knowledge, buying advice, market context, greetings, small talk. Optionally performs DuckDuckGo web search for time-sensitive questions (reliability, prices, reviews, news). Uses an LLM sub-call to decide whether to search.</div>
+      <div class="desc">General car knowledge, buying advice, market context, greetings, small talk. Optionally performs DuckDuckGo web search for time-sensitive questions (reliability, prices, reviews, news). Uses an LLM sub-call to decide whether to search (search decision <strong>cached</strong>).</div>
       <div class="output">→ <code>{"node_response": str, "preferences": {...}}</code></div>
-      <div class="llm"><span class="llm-badge">LLM</span> 2× ainvoke (search decision + preference refine) + 1× astream (conversation response)</div>
+      <div class="llm"><span class="llm-badge">LLM</span> 1× <code>MultiLLM.ainvoke_task("search_decision", ...)</code> (search decision, <strong>cached</strong>) + 1× <code>ainvoke_task("preference_extractor", ...)</code> (refine) + 1× <code>astream_task("general", ...)</code> (response) — routed to <strong>powerful</strong> model for streaming, <strong>fast</strong> for decisions</div>
       <div class="tools-label">Tool Calls</div>
       <ul class="tools">
         <li><span class="tool-badge">WEB</span> <code>web_search.search()</code> — conditional DuckDuckGo search, based on LLM decision</li>
@@ -419,7 +424,7 @@
 
     <div class="node-card">
       <div class="name">responder_node</div>
-      <div class="desc">Final output node. Emits SSE events: status text, token-by-token response, car cards (retrieved_ads), similar cars, price analysis, and new match notifications. Then persists everything to PostgreSQL (user message + assistant response + preferences).</div>
+      <div class="desc">Final output node. Emits SSE events: status text, token-by-token response, car cards (retrieved_ads), similar cars, price analysis, and new match notifications. Then persists everything to PostgreSQL (user message + assistant response + preferences). <strong>Supports client disconnect detection</strong> — if client drops SSE, graph execution is cancelled immediately.</div>
       <div class="output">→ <code>{"messages": [AIMessage(content=...)]}</code> (appended to state)</div>
       <div class="llm"><span class="llm-badge">LLM</span> None (pure orchestration — no LLM call)</div>
       <div class="tools-label">SSE Event Types (in order)</div>
@@ -445,14 +450,15 @@
   <!-- ================================================================ -->
   <!-- SECTION 3: TOOL CALLING MATRIX                                   -->
   <!-- ================================================================ -->
-  <h2>3. Tool Calling Matrix</h2>
+  <h2>3. Tool Calling &amp; MCP Matrix</h2>
 
   <div class="diagram-wrapper">
     <table class="tool-matrix">
       <thead>
         <tr>
           <th>Node</th>
-          <th>LLM Calls</th>
+          <th>LLM Calls (model tier)</th>
+          <th>MCP Tools Called</th>
           <th>Database (PostgreSQL)</th>
           <th>Vector Search (Qdrant)</th>
           <th>Web Search</th>
@@ -462,15 +468,17 @@
       <tbody>
         <tr>
           <td><strong>preference_extractor</strong></td>
-          <td>1× ainvoke</td>
+          <td>1× ainvoke (<strong>fast</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>expand_brand_origins</code></td>
           <td>upsert_user_preferences</td>
           <td class="no">—</td>
           <td class="no">—</td>
-          <td>format_brand_origins_prompt</td>
+          <td class="no">—</td>
         </tr>
         <tr>
           <td><strong>router</strong></td>
-          <td>1× ainvoke</td>
+          <td>1× ainvoke (<strong>fast</strong>, <strong>cached</strong>)</td>
+          <td class="no">—</td>
           <td class="no">—</td>
           <td class="no">—</td>
           <td class="no">—</td>
@@ -478,55 +486,62 @@
         </tr>
         <tr>
           <td><strong>catalogue_node</strong></td>
-          <td>1× ainvoke</td>
-          <td>check_catalogue_availability</td>
+          <td>1× ainvoke (<strong>fast</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>check_catalogue</code>, <code>expand_brand_origins</code></td>
+          <td class="no">(via MCP)</td>
           <td class="no">—</td>
           <td class="no">—</td>
-          <td>format_brand_origins_prompt</td>
+          <td class="no">—</td>
         </tr>
         <tr>
           <td><strong>search_node</strong></td>
-          <td>1× ainvoke + 1× astream</td>
-          <td>get_ad_images_by_ids, get_new_matching_ads</td>
-          <td class="yes">Qdrant search (up to 2 attempts + merge)</td>
+          <td>1× ainvoke + 1× astream (<strong>powerful</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>search_cars</code>, <code>get_car_images</code>, <code>expand_colloquial_terms</code></td>
+          <td>get_new_matching_ads</td>
+          <td class="yes">via MCP <code>search_cars</code> (BM25 + vector + RRF, up to 2 attempts + merge)</td>
           <td class="no">—</td>
-          <td>format_expansions, verify_results, evaluate_quality, compute_dcg, merge_dedup</td>
+          <td>verify_results, evaluate_quality, compute_dcg, merge_dedup, <strong>embedding cache</strong></td>
         </tr>
         <tr>
           <td><strong>recommendation_node</strong></td>
-          <td>1× astream</td>
-          <td>get_ad_images_by_ids</td>
-          <td class="yes">Qdrant search (relaxed: ±3yr, same body/budget)</td>
+          <td>1× astream (<strong>powerful</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>search_cars</code>, <code>get_car_images</code></td>
+          <td class="no">(via MCP)</td>
+          <td class="yes">via MCP <code>search_cars</code> (relaxed: ±3yr, same body/budget)</td>
           <td class="no">—</td>
           <td>verify_results</td>
         </tr>
         <tr>
           <td><strong>advisor_node</strong></td>
-          <td>2× ainvoke + 1× astream</td>
+          <td>2× ainvoke + 1× astream (<strong>powerful</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>find_similar_cars</code></td>
           <td>upsert_user_preferences</td>
-          <td class="yes">Qdrant search (similar cars, exclusions)</td>
+          <td class="yes">via MCP <code>find_similar_cars</code> (similar cars, exclusions)</td>
           <td class="yes"><span class="tool-badge">WEB</span> web_search.search (reliability data)</td>
           <td>build_grounding_block, validate_response (hallucination guard)</td>
         </tr>
         <tr>
           <td><strong>seller_node</strong></td>
-          <td>1× ainvoke + 1× astream</td>
+          <td>1× ainvoke + 1× astream (<strong>powerful</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>analyze_market_price</code></td>
           <td>upsert_user_preferences</td>
-          <td class="yes">Qdrant search (market price analysis)</td>
+          <td class="yes">via MCP <code>analyze_market_price</code> (market price analysis)</td>
           <td class="yes"><span class="tool-badge">WEB</span> web_search.search (market context)</td>
-          <td>Price computation (median, min/max, km-driven multipliers)</td>
+          <td class="no">—</td>
         </tr>
         <tr>
           <td><strong>guide_node</strong></td>
-          <td>1× ainvoke + 1× astream</td>
+          <td>1× ainvoke (<strong>fast</strong>, <strong>cached</strong>) + 1× astream (<strong>fast</strong>)</td>
+          <td><span class="mcp-badge">MCP</span> <code>get_website_guide</code></td>
           <td class="no">—</td>
           <td class="no">—</td>
           <td class="no">—</td>
-          <td>format_website_guide</td>
+          <td class="no">—</td>
         </tr>
         <tr>
           <td><strong>general_node</strong></td>
-          <td>2× ainvoke + 1× astream</td>
+          <td>1× ainvoke (<strong>fast</strong>, <strong>cached</strong>) + 1× ainvoke (<strong>fast</strong>) + 1× astream (<strong>powerful</strong>)</td>
+          <td class="no">—</td>
           <td>upsert_user_preferences</td>
           <td class="no">—</td>
           <td class="yes"><span class="tool-badge">WEB</span> web_search.search (conditional)</td>
@@ -535,141 +550,396 @@
         <tr>
           <td><strong>responder_node</strong></td>
           <td class="no">—</td>
+          <td class="no">—</td>
           <td>insert_chat_message, upsert_user_preferences</td>
           <td class="no">—</td>
           <td class="no">—</td>
-          <td>SSE streaming, token emission, text sanitization</td>
+          <td>SSE streaming, token emission, text sanitization, <strong>client disconnect detection</strong></td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <!-- ================================================================ -->
-  <!-- SECTION 4: LLM & FALLBACK CHAIN                                  -->
+  <!-- SECTION 4: MCP ARCHITECTURE                                      -->
   <!-- ================================================================ -->
-  <h2>4. LLM Fallback Chain</h2>
+  <h2>4. MCP (Model Context Protocol) Architecture</h2>
   <p>
-    Every LLM call goes through a <strong>5-tier FallbackLLM</strong> class.
-    It tries providers in order until one succeeds. Groq is the primary (fastest inference),
-    with two API keys and two model options; OpenRouter is the secondary fallback
-    with its own two API keys.
+    The chatbot uses an <strong>MCP (Model Context Protocol)</strong> abstraction layer to decouple
+    graph nodes from direct database and external service calls. The <code>MCPToolRegistry</code>
+    acts as the single interface for all graph nodes to call external tools. Two in-process MCP
+    servers (<strong>car-search</strong> and <strong>analysis</strong>) provide 10 tools total,
+    wrapping Qdrant hybrid search, PostgreSQL queries, price analysis, web search, brand expansion,
+    and website guide generation.
+  </p>
+
+  <div class="arch-callout">
+    <strong>MCPToolRegistry</strong> — defined in <code>app/core/mcp_client.py</code> (152 lines).<br>
+    Initialized at service startup in <code>main.py</code> and injected into every graph node via
+    <code>config["configurable"]["mcp_registry"]</code>.<br>
+    Supports three transport modes: <strong>in-process</strong> (same process, zero overhead),
+    <strong>stdio</strong> (subprocess for isolation), and <strong>SSE</strong> (remote HTTP servers).
+    Currently all servers run in-process.
+  </div>
+
+  <div class="diagram-wrapper">
+    <pre class="mermaid">
+      flowchart TD
+        GN[Graph Node] -->|"config['configurable']
+        ['mcp_registry']"| REG[MCPToolRegistry]
+
+        REG -->|"register_in_process()
+        'car-search'"| CARS[car-search MCP Server
+        app/core/mcp/servers/car_search_server.py]
+        REG -->|"register_in_process()
+        'analysis'"| ANL[analysis MCP Server
+        app/core/mcp/servers/analysis_server.py]
+
+        CARS -->|"search_cars"| QDR[(Qdrant Cloud
+        Hybrid: BM25 + vector)]
+        CARS -->|"get_car_details"| PG[(PostgreSQL
+        Supabase)]
+        CARS -->|"find_similar_cars"| QDR
+        CARS -->|"check_catalogue"| PG
+        CARS -->|"get_car_images"| PG
+
+        ANL -->|"analyze_market_price"| QDR
+        ANL -->|"web_search"| WEB[DuckDuckGo / Web]
+        ANL -->|"get_website_guide"| DATA[Data Constants]
+        ANL -->|"expand_brand_origins"| DATA
+        ANL -->|"expand_colloquial_terms"| DATA
+
+        subgraph MCP["MCP Layer (in-process)"]
+          REG
+          CARS
+          ANL
+        end
+
+        style GN fill:#2563eb,color:#fff,stroke:none
+        style REG fill:#3b82f6,color:#fff,stroke:none
+        style CARS fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
+        style ANL fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
+        style QDR fill:#22c55e,color:#fff,stroke:#16a34a
+        style PG fill:#22c55e,color:#fff,stroke:#16a34a
+        style WEB fill:#f59e0b,color:#fff,stroke:none
+        style DATA fill:#6b7280,color:#fff,stroke:none
+    </pre>
+  </div>
+
+  <h3>MCP Servers &amp; Tool Inventory</h3>
+
+  <h3>car-search Server</h3>
+  <p><code>app/core/mcp/servers/car_search_server.py</code> (251 lines) — wraps Qdrant hybrid search + PostgreSQL car queries.</p>
+  <table class="tool-matrix">
+    <thead>
+      <tr><th>Tool</th><th>Description</th><th>Input</th><th>Backend</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>search_cars</code></td>
+        <td>Hybrid search with BM25 + vector + RRF fusion</td>
+        <td>query, limit, budget, brand(s), city, fuel_type, transmission, body_type, year_min/max</td>
+        <td>Qdrant (<code>qdrant_search.hybrid_search</code>)</td>
+      </tr>
+      <tr>
+        <td><code>get_car_details</code></td>
+        <td>Full ad details by UUID</td>
+        <td>ad_id</td>
+        <td>PostgreSQL (<code>SELECT * FROM ads</code>)</td>
+      </tr>
+      <tr>
+        <td><code>find_similar_cars</code></td>
+        <td>Find similar cars by brand/model/year</td>
+        <td>brand, model, year, body_type, exclude_ad_id, limit</td>
+        <td>Qdrant hybrid search</td>
+      </tr>
+      <tr>
+        <td><code>check_catalogue</code></td>
+        <td>Check if specific model exists in active listings</td>
+        <td>brand, model, year, body_type</td>
+        <td>PostgreSQL (<code>check_catalogue_availability</code>)</td>
+      </tr>
+      <tr>
+        <td><code>get_car_images</code></td>
+        <td>Get image URLs for car ads</td>
+        <td>ad_ids[]</td>
+        <td>PostgreSQL (<code>get_ad_images_by_ids</code>)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>analysis Server</h3>
+  <p><code>app/core/mcp/servers/analysis_server.py</code> (218 lines) — wraps price analysis, brand expansion, website guide, web search.</p>
+  <table class="tool-matrix">
+    <thead>
+      <tr><th>Tool</th><th>Description</th><th>Input</th><th>Backend</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>analyze_market_price</code></td>
+        <td>Compute median, min/max, recommended price range from similar listings</td>
+        <td>brand, model, year, km_driven, condition</td>
+        <td>Qdrant hybrid search + price computation</td>
+      </tr>
+      <tr>
+        <td><code>web_search</code></td>
+        <td>Search the web for current information</td>
+        <td>query, language</td>
+        <td>DuckDuckGo / web search wrapper</td>
+      </tr>
+      <tr>
+        <td><code>get_website_guide</code></td>
+        <td>Get website features reference for how-to questions</td>
+        <td>topic (optional)</td>
+        <td>Constants (<code>format_website_guide</code>)</td>
+      </tr>
+      <tr>
+        <td><code>expand_brand_origins</code></td>
+        <td>Expand country/origin to brand names</td>
+        <td>origin</td>
+        <td>Constants (<code>format_brand_origins_prompt</code>)</td>
+      </tr>
+      <tr>
+        <td><code>expand_colloquial_terms</code></td>
+        <td>Expand colloquial car terms to standard search vocabulary</td>
+        <td>query</td>
+        <td>Constants (<code>format_expansions_prompt</code>)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Transport Modes</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr><th>Mode</th><th>Method</th><th>Latency</th><th>Use Case</th><th>Currently Used</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>In-Process</strong></td>
+        <td><code>register_in_process()</code></td>
+        <td>Zero overhead (same process)</td>
+        <td>Fast internal tools (Qdrant, DB, web search)</td>
+        <td class="yes">✅ car-search, analysis</td>
+      </tr>
+      <tr>
+        <td><strong>STDIO</strong></td>
+        <td><code>register_stdio()</code></td>
+        <td>Subprocess launch overhead</td>
+        <td>Isolated 3rd-party tool execution</td>
+        <td class="no">⚠ Not yet used</td>
+      </tr>
+      <tr>
+        <td><strong>SSE</strong></td>
+        <td><code>register_sse()</code></td>
+        <td>Network RTT</td>
+        <td>Remote MCP servers (external tools)</td>
+        <td class="no">⚠ Not yet used</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>MCP vs Direct Tool Usage</h3>
+  <p>
+    Nodes that require <strong>web search</strong> (advisor_node, seller_node, general_node) bypass the
+    MCP layer and call <code>web_search.search()</code> directly via <code>config["configurable"]["web_search"]</code>
+    (the MCP analysis server also exposes <code>web_search</code> as a tool for future use). All other
+    external operations (DB queries, vector search, price analysis, brand expansion, website guide) are
+    routed through the MCP registry.
+  </p>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 5: MULTI-LLM ROUTING & FALLBACK CHAIN                    -->
+  <!-- ================================================================ -->
+  <h2>5. Multi-LLM Routing &amp; Fallback Chain</h2>
+  <p>
+    Every LLM call goes through the <strong>MultiLLM</strong> class which provides
+    <strong>task-based routing</strong> — simple tasks (routing, extraction, topic detection)
+    use a cheap/fast Groq model (low temp, 1024 tokens), while complex tasks (advisor, seller, search)
+    use a powerful model (Groq fallback → OpenRouter → fast fallback, 4096 tokens, streaming).
+    This reduces cost and latency for routine operations while preserving quality for reasoning-heavy nodes.
   </p>
 
   <div class="diagram-wrapper">
     <pre class="mermaid">
-      flowchart LR
-        REQ[LLM Request] --> GROQ1["Groq (Primary)
-        ChatGroq
+      flowchart TD
+        REQ[LLM Request] --> TASK{"Task Type"}
+
+        TASK -->|"simple: router,
+        preference_extractor,
+        guide_topic,
+        search_decision,
+        catalogue_check"| FAST[FAST MODEL
+        Groq openai/gpt-oss-120b
+        temp=0, max_tokens=1024
+        key: groq_api_key]
+
+        TASK -->|"complex: advisor,
+        seller, search,
+        recommendation,
+        general"| POWER[POWERFUL MODEL]
+
+        POWER --> P1["Groq (Fallback key)
         openai/gpt-oss-120b
-        key: groq_api_key"]
+        temp=0.3, max_tokens=4096
+        groq_api_key_fallback"]
 
-        GROQ1 -->|"success"| RES[Response]
-        GROQ1 -->|"error / rate limit"| GROQ2["Groq Failover
-        ChatGroq
-        openai/gpt-oss-120b
-        key: groq_api_key_fallback"]
-
-        GROQ2 -->|"success"| RES
-        GROQ2 -->|"error / rate limit"| GROQ3["Groq Failover 2
-        ChatGroq
-        gemma2-9b-it
-        key: groq_api_key_fallback2"]
-
-        GROQ3 -->|"success"| RES
-        GROQ3 -->|"error / rate limit"| OR1["OpenRouter (Primary)
-        Custom HTTP Client
-        nemotron-3-nano-omni
-        key: openrouter_api_key
+        P1 -->|"success"| RES[Response]
+        P1 -->|"error/timeout"| P2["OpenRouter
+        nvidia/nemotron-3-nano-omni
+        temp=0.3, max_tokens=4096
         3-retry exp backoff"]
 
-        OR1 -->|"success"| RES
-        OR1 -->|"error / rate limit"| OR2["OpenRouter (Alt key)
-        Custom HTTP Client
-        nemotron-3-nano-omni
-        key: openrouter_api_key_fallback
-        3-retry exp backoff"]
+        P2 -->|"success"| RES
+        P2 -->|"error/timeout"| P3["Groq (Primary)
+        temp=0.3, max_tokens=4096
+        groq_api_key"]
 
-        OR2 -->|"success"| RES
-        OR2 -->|"all failed"| ERR["Raise RuntimeError
-        'All LLM providers unavailable'"]
+        FAST -->|"success / cached"| RES
+        FAST -->|"error"| RES_ERR[Return error to user]
+
+        P3 -->|"success"| RES
+        P3 -->|"all failed"| ERR["RuntimeError
+        'Service temporarily unavailable'"]
+
+        subgraph CACHE["SemanticCache (in-memory)"]
+          SC[LLM responses cached
+          300 entries, 30min TTL
+          Cacheable: router,
+          guide_topic,
+          search_decision]
+        end
+
+        FAST -.->|"cache check"| CACHE
+        CACHE -.->|"cache hit → skip LLM"| RES
 
         style REQ fill:#3b82f6,color:#fff,stroke:none
+        style TASK fill:#8b5cf6,color:#fff,stroke:none
+        style FAST fill:#22c55e,color:#fff,stroke:none
+        style POWER fill:#f59e0b,color:#fff,stroke:none
         style RES fill:#22c55e,color:#fff,stroke:none
         style ERR fill:#ef4444,color:#fff,stroke:none
-        style GROQ1 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
-        style GROQ2 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
-        style GROQ3 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
-        style OR1 fill:#1a1d27,stroke:#f59e0b,color:#e4e6f0
-        style OR2 fill:#1a1d27,stroke:#f59e0b,color:#e4e6f0
+        style CACHE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style SC fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style P1 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
+        style P2 fill:#1a1d27,stroke:#f59e0b,color:#e4e6f0
+        style P3 fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
     </pre>
   </div>
 
-  <h3>Provider Details</h3>
+  <h3>Task Routing Rules</h3>
   <table class="tool-matrix">
     <thead>
       <tr>
-        <th>Tier</th>
-        <th>Provider</th>
-        <th>Model</th>
-        <th>Key Source</th>
-        <th>Timeout</th>
-        <th>Retry</th>
+        <th>Task Type</th>
+        <th>Model Tier</th>
+        <th>Provider Chain</th>
+        <th>Cacheable</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>1 (Primary)</td>
-        <td>Groq</td>
-        <td><code>openai/gpt-oss-120b</code></td>
-        <td><code>groq_api_key</code></td>
-        <td>15s</td>
-        <td>Provider-level retry</td>
+        <td><code>router</code></td>
+        <td><strong>Fast</strong> (temp=0, 1024tok)</td>
+        <td>Groq primary</td>
+        <td class="yes">Yes (120s TTL)</td>
       </tr>
       <tr>
-        <td>2 (Failover)</td>
-        <td>Groq</td>
-        <td><code>openai/gpt-oss-120b</code></td>
-        <td><code>groq_api_key_fallback</code></td>
-        <td>15s</td>
-        <td>Provider-level retry</td>
+        <td><code>preference_extractor</code></td>
+        <td><strong>Fast</strong> (temp=0, 1024tok)</td>
+        <td>Groq primary</td>
+        <td class="no">No (context-dependent)</td>
       </tr>
       <tr>
-        <td>3 (Failover 2)</td>
-        <td>Groq</td>
-        <td><code>gemma2-9b-it</code></td>
-        <td><code>groq_api_key_fallback2</code></td>
-        <td>15s</td>
-        <td>Provider-level retry</td>
+        <td><code>guide_topic</code></td>
+        <td><strong>Fast</strong> (temp=0, 1024tok)</td>
+        <td>Groq primary</td>
+        <td class="yes">Yes (120s TTL)</td>
       </tr>
       <tr>
-        <td>4 (Fallback)</td>
-        <td>OpenRouter</td>
-        <td><code>nvidia/nemotron-3-nano-omni-30b</code></td>
-        <td><code>openrouter_api_key</code></td>
-        <td>20s</td>
-        <td>3 attempts, exp backoff (2s, 4s, 8s)</td>
+        <td><code>search_decision</code></td>
+        <td><strong>Fast</strong> (temp=0, 1024tok)</td>
+        <td>Groq primary</td>
+        <td class="yes">Yes (120s TTL)</td>
       </tr>
       <tr>
-        <td>5 (Fallback alt)</td>
-        <td>OpenRouter</td>
-        <td><code>nvidia/nemotron-3-nano-omni-30b</code></td>
-        <td><code>openrouter_api_key_fallback</code></td>
-        <td>20s</td>
-        <td>3 attempts, exp backoff (2s, 4s, 8s)</td>
+        <td><code>catalogue_check</code></td>
+        <td><strong>Fast</strong> (temp=0, 1024tok)</td>
+        <td>Groq primary</td>
+        <td class="no">No (context-dependent)</td>
+      </tr>
+      <tr>
+        <td><code>advisor</code></td>
+        <td><strong>Powerful</strong> (temp=0.3, 4096tok)</td>
+        <td>Groq fallback → OpenRouter → Groq primary</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>seller</code></td>
+        <td><strong>Powerful</strong> (temp=0.3, 4096tok)</td>
+        <td>Groq fallback → OpenRouter → Groq primary</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>search</code></td>
+        <td><strong>Powerful</strong> (temp=0.3, 4096tok)</td>
+        <td>Groq fallback → OpenRouter → Groq primary</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>recommendation</code></td>
+        <td><strong>Powerful</strong> (temp=0.3, 4096tok)</td>
+        <td>Groq fallback → OpenRouter → Groq primary</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td><code>general</code></td>
+        <td><strong>Powerful</strong> (temp=0.3, 4096tok)</td>
+        <td>Groq fallback → OpenRouter → Groq primary</td>
+        <td class="no">No</td>
       </tr>
     </tbody>
   </table>
 
   <!-- ================================================================ -->
-  <!-- SECTION 5: CHAT MEMORY & PERSISTENCE                             -->
+  <!-- SECTION 6: CACHING, MEMORY & PERSISTENCE                         -->
   <!-- ================================================================ -->
-  <h2>5. Chat Memory &amp; Persistence</h2>
+  <h2>6. Caching, Memory &amp; Persistence</h2>
   <p>
     Conversation memory uses <strong>PostgreSQL</strong> for long-term persistence and
     <strong>MemorySaver</strong> (in-memory) for LangGraph checkpoints during active sessions.
+    A lightweight <strong>SemanticCache</strong> (in-memory LRU) reduces redundant LLM and embedding calls.
   </p>
 
-  <h3>Tables</h3>
+  <h3>Caching Layer</h3>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Cache</th>
+        <th>Max Entries</th>
+        <th>TTL</th>
+        <th>Key</th>
+        <th>Used By</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Embedding Cache</strong></td>
+        <td>1000</td>
+        <td>2h</td>
+        <td><code>SHA256(text)</code></td>
+        <td><code>embedder.encode()</code> — caches vector embeddings for repeated search queries</td>
+      </tr>
+      <tr>
+        <td><strong>LLM Response Cache</strong></td>
+        <td>300</td>
+        <td>30min</td>
+        <td><code>SHA256(prompt_text)</code></td>
+        <td>Router, topic detection, search decision — deterministic LLM calls</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Database Tables</h3>
   <ul>
     <li><code>chat_sessions</code> — session_token, user_id, context_ad_id, last_active</li>
     <li><code>chat_messages</code> — session_token, role (user/assistant), content, node_used, referenced_ad_ids[]</li>
@@ -688,9 +958,34 @@
   <p>Generated by <code>POST /chat/session</code>, stored in <code>localStorage</code> on the frontend, and sent with every <code>/message</code> request. Persists across page refreshes and browser restarts.</p>
 
   <!-- ================================================================ -->
-  <!-- SECTION 6: CHATBOT DATA FLOW (DFD)                              -->
+  <!-- SECTION 7: GUARDRAILS & INPUT SAFETY                             -->
   <!-- ================================================================ -->
-  <h2>6. Chatbot Data Flow Diagram (DFD)</h2>
+  <h2>7. Guardrails &amp; Input Safety</h2>
+  <p>
+    A lightweight <strong>guardrails layer</strong> runs at the entry point of every chat request,
+    before any LLM processing. It validates input, detects prompt injection, and provides
+    fallback error messages to the user without invoking the graph.
+  </p>
+
+  <div class="arch-callout">
+    <strong>guardrails.validate_input()</strong> — called in <code>routers/chat.py</code> before graph execution.<br>
+    Checks: empty message, max length (2000 chars), prompt injection patterns, sensitive data detection.<br>
+    On failure: returns <code>{"type": "error", "content": "..."}</code> and <code>done</code> SSE events immediately.
+  </div>
+
+  <h3>Injection Pattern Detection</h3>
+  <p>The guardrail blocks attempts to override system instructions via regex patterns matching:</p>
+  <ul>
+    <li><code>"ignore all previous instructions"</code></li>
+    <li><code>"you are now free / unleashed / DAN"</code></li>
+    <li><code>"new instructions:"</code></li>
+    <li><code>"you don't have to obey"</code></li>
+  </ul>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 8: CHATBOT DATA FLOW (DFD)                              -->
+  <!-- ================================================================ -->
+  <h2>8. Chatbot Data Flow Diagram (DFD)</h2>
   <p>End-to-end data flow through the chatbot system — from user message to SSE response — showing all external entities, processes, data stores, and data flows.</p>
 
   <div class="diagram-wrapper">
@@ -710,6 +1005,8 @@
         end
 
         subgraph CB["🤖 Chatbot Service (FastAPI :8001)"]
+          GUARD[Guardrails
+          Input Validation]
           INVOKE[POST /message]
           GRAPH[LangGraph
           StateGraph]
@@ -729,22 +1026,45 @@
 
           QUE[SSE Queue
           asyncio.Queue]
+          DC[Disconnect
+          Detection]
+        end
+
+        subgraph MCPLAYER["🔌 MCP Layer (in-process)"]
+          MCP[MCPToolRegistry
+          app/core/mcp_client.py]
+          CS[car-search server
+          5 tools]
+          AS[analysis server
+          5 tools]
+        end
+
+        subgraph CACHE["⚡ Semantic Cache"]
+          EC[Embedding Cache
+          1000 entries, 2h TTL]
+          LC[LLM Cache
+          300 entries, 30min TTL]
         end
 
         subgraph DS["💾 Data Stores"]
           PG[(PostgreSQL
           Supabase)]
           QDR[(Qdrant Cloud
-          Vector DB)]
+          Vector + BM25)]
           MEM[In-Memory
           Session State]
         end
 
         subgraph EXT["🌐 External APIs"]
-          GROQ_API[Groq API
-          LLM Inference]
-          OR_API[OpenRouter API
-          LLM Fallback]
+          GROQ_FAST[Groq Fast
+          openai/gpt-oss-120b
+          temp=0, 1024tok]
+          GROQ_POWER[Groq Powerful
+          openai/gpt-oss-120b
+          temp=0.3, 4096tok]
+          OR_API[OpenRouter
+          nemotron-3-nano-omni
+          3-retry backoff]
           DDG[DuckDuckGo
           Web Search]
         end
@@ -753,84 +1073,110 @@
         {text, session_token}"| CHAT
         CHAT -->|"HTTP POST"| BE
         BE -->|"proxy /api/v1/chat"| CB
-        CB --> INVOKE
+        CB --> GUARD
+        GUARD -->|"invalid → error SSE"| QUE
+        GUARD -->|"valid"| INVOKE
         INVOKE -->|"rebuild state
         from DB"| PG
         INVOKE --> GRAPH
 
         GRAPH --> PE
+        PE -->|"MCP: expand_brand_origins"| MCP
         PE -->|"upsert_prefs"| PG
         PE --> RTR
+        RTR -->|"check cache"| LC
         RTR --> CAT
         RTR --> ADV
         RTR --> SELL
         RTR --> GUIDE
         RTR --> GEN
 
-        CAT -->|"check_catalogue"| PG
+        CAT -->|"MCP: check_catalogue"| MCP
         CAT --> SN
         CAT --> RN
 
-        SN -->|"encode"| MEM
-        SN -->|"vector_search"| QDR
-        SN -->|"get_images + 
-        new_matches"| PG
+        SN -->|"MCP: search_cars,
+        expand_colloquial_terms"| MCP
+        SN -->|"get_new_matches"| PG
         SN --> RESP
 
-        RN -->|"encode + search"| QDR
-        RN -->|"get_images"| PG
+        RN -->|"MCP: search_cars"| MCP
         RN --> RESP
 
         ADV -->|"grounding_block"| PG
-        ADV -->|"similar_cars"| QDR
+        ADV -->|"MCP: find_similar_cars"| MCP
         ADV -->|"web_search"| DDG
         ADV --> RESP
 
-        SELL -->|"market_search"| QDR
-        SELL -->|"price_compute"| MEM
+        SELL -->|"MCP: analyze_market_price"| MCP
         SELL -->|"web_search"| DDG
         SELL --> RESP
 
+        GUIDE -->|"MCP: get_website_guide"| MCP
         GUIDE --> RESP
+
         GEN -->|"web_search"| DDG
         GEN --> RESP
 
+        MCP -->|"search_cars"| QDR
+        MCP -->|"check_catalogue,
+        get_car_images,
+        get_car_details"| PG
+        MCP -->|"analyze_market_price"| QDR
+        MCP -->|"web_search"| DDG
+
         RESP -->|"insert_message"| PG
         RESP -->|"emit events"| QUE
+        RESP -.->|"disconnect → cancel"| DC
+        DC -.->|"cancel graph"| GRAPH
         QUE -->|"SSE tokens,
         cars, similar,
         price, done"| SSE
         SSE -->|"update"| UI
         UI -->|"display"| USER
 
-        subgraph LLMCALL["⬆ LLM Calls (all nodes)"]
-          direction LR
-          GROQ_API
+        subgraph LLMFAST["⬆ Fast LLM (simple tasks)"]
+          GROQ_FAST
+        end
+
+        subgraph LLMPOWER["⬆ Powerful LLM (complex tasks)"]
+          GROQ_POWER
           OR_API
         end
 
-        PE -.->|"1x ainvoke"| LLMCALL
-        RTR -.->|"1x ainvoke"| LLMCALL
-        CAT -.->|"1x ainvoke"| LLMCALL
-        SN -.->|"2x"| LLMCALL
-        RN -.->|"1x astream"| LLMCALL
-        ADV -.->|"3x"| LLMCALL
-        SELL -.->|"2x"| LLMCALL
-        GUIDE -.->|"2x"| LLMCALL
-        GEN -.->|"3x"| LLMCALL
+        PE -.->|"1x"| LLMFAST
+        RTR -.->|"1x (cached)"| LLMFAST
+        CAT -.->|"1x"| LLMFAST
+        SN -.->|"2x"| LLMPOWER
+        RN -.->|"1x"| LLMPOWER
+        ADV -.->|"3x"| LLMPOWER
+        SELL -.->|"2x"| LLMPOWER
+        GUIDE -.->|"1x fast + 1x cached"| LLMFAST
+        GEN -.->|"2x fast (1 cached) + 1x powerful"| LLMPOWER
+        GEN -.->|"1x fast (cached)"| LLMFAST
 
         style USER fill:#3b82f6,color:#fff,stroke:none
         style PG fill:#22c55e,color:#fff,stroke:#16a34a
         style QDR fill:#22c55e,color:#fff,stroke:#16a34a
         style MEM fill:#22c55e,color:#fff,stroke:#16a34a
-        style GROQ_API fill:#8b5cf6,color:#fff,stroke:none
+        style GROQ_FAST fill:#22c55e,color:#fff,stroke:none
+        style GROQ_POWER fill:#8b5cf6,color:#fff,stroke:none
         style OR_API fill:#8b5cf6,color:#fff,stroke:none
         style DDG fill:#f59e0b,color:#fff,stroke:none
+        style CACHE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style EC fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style LC fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
 
+        style MCPLAYER fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
+        style MCP fill:#3b82f6,color:#fff,stroke:none
+        style CS fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
+        style AS fill:#1a1d27,stroke:#8b5cf6,color:#e4e6f0
         style CHAT fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
         style SSE fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
         style UI fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
         style PROXY fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style GUARD fill:#1a1d27,stroke:#ef4444,color:#e4e6f0
+        style DC fill:#1a1d27,stroke:#ef4444,color:#e4e6f0
         style INVOKE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
         style GRAPH fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
         style QUE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
@@ -838,10 +1184,10 @@
   </div>
 
   <!-- ================================================================ -->
-  <!-- SECTION 7: SSE EVENT STREAM                                      -->
+  <!-- SECTION 9: SSE EVENT STREAM                                      -->
   <!-- ================================================================ -->
-  <h2>7. SSE Event Stream (responder_node → Frontend)</h2>
-  <p>Sequence of events emitted by the responder_node over a single SSE connection during a request.</p>
+  <h2>9. SSE Event Stream (responder_node → Frontend)</h2>
+  <p>Sequence of events emitted by the responder_node over a single SSE connection during a request. <strong>Client disconnect detection</strong> cancels graph execution if the browser disconnects.</p>
 
   <div class="diagram-wrapper">
     <pre class="mermaid">
@@ -851,31 +1197,32 @@
         participant B as Backend Proxy
         participant C as Chatbot
         participant Q as Qdrant
-        participant L as LLM (Groq)
+        participant L as LLM (MultiLLM)
 
         U->>F: Type message / Speak
         F->>B: POST /api/v1/chat/message
         B->>C: POST /message
+        C->>C: Guardrail check (input validation)
         C->>C: Rebuild state from Postgres
 
         Note over C: preference_extractor → router
 
-        C->>L: classify intent
+        C->>L: classify intent (fast model, cached)
         L-->>C: intent: catalogue_node
 
         Note over C: specialist node executes
 
         alt search_node
-          C->>L: build search query
+          C->>L: build search query (powerful model)
           L-->>C: query + filters
-          C->>Q: vector_search()
+          C->>Q: hybrid_search() (BM25 + vector + RRF)
           Q-->>C: results
-          C->>L: generate intro text
+          C->>L: generate intro text (powerful model, streaming)
           L-->>C: streamed text
         else recommendation_node
-          C->>Q: relaxed search (±3yr)
+          C->>Q: hybrid_search() relaxed (±3yr)
           Q-->>C: alternatives
-          C->>L: write alternative explanation
+          C->>L: write alternative explanation (powerful model, streaming)
           L-->>C: streamed text
         end
 
@@ -889,14 +1236,16 @@
         C-->>F: event: similar_cars [{ad...}]
         C-->>F: event: done
 
+        Note over C: Client disconnect → graph cancelled
+
         F->>U: Render messages & car cards
     </pre>
   </div>
 
   <!-- ================================================================ -->
-  <!-- NEW SECTION 8: COMPARISON ANALYSIS                              -->
+  <!-- SECTION 10: COMPARISON ANALYSIS                                  -->
   <!-- ================================================================ -->
-  <h2>8. Comparison Analysis Service</h2>
+  <h2>10. Comparison Analysis Service</h2>
   <p>
     A separate microservice (<strong>FastAPI</strong> on port 8002) that performs deep,
     multi-step AI analysis comparing 2–3 car ads side-by-side. Users trigger it from the
@@ -1114,9 +1463,111 @@
   </ul>
 
   <!-- ================================================================ -->
-  <!-- SECTION 9: LANGSMITH TRACING                                    -->
+  <!-- SECTION 11: VOICE ASSISTANT                                     -->
   <!-- ================================================================ -->
-  <h2>9. LangSmith Tracing</h2>
+  <h2>11. Voice Assistant</h2>
+  <p>
+    The chatbot includes a voice I/O subsystem within the Chatbot microservice (:8001), enabling
+    speech-to-text (STT) and text-to-speech (TTS) capabilities. Voice endpoints are proxied through
+    the Backend API gateway (:8000) so the frontend accesses them via a single origin.
+  </p>
+
+  <h3>Architecture</h3>
+
+  <div class="diagram-wrapper">
+    <pre class="mermaid">
+      flowchart LR
+        FE[Frontend] -->|"POST /api/v1/chat/stt
+        multipart audio"| BE[Backend Proxy]
+        FE -->|"POST /api/v1/chat/tts
+        {text, language}"| BE
+
+        BE -->|"proxy /voice/stt"| CB[Chatbot /voice/stt]
+        BE -->|"proxy /voice/tts"| CB
+
+        CB -->|"Groq Whisper
+        large-v3-turbo"| GROQ[Groq API]
+        CB -->|"edge-tts
+        ar-EG / en-US"| TTS[edge-tts]
+
+        GROQ -->|"verbose_json
+        text + confidence"| CB
+        TTS -->|"audio/mpeg
+        stream"| CB
+
+        style FE fill:#3b82f6,color:#fff,stroke:none
+        style BE fill:#1a1d27,stroke:#6b7280,color:#e4e6f0
+        style CB fill:#8b5cf6,color:#fff,stroke:none
+        style GROQ fill:#22c55e,color:#fff,stroke:none
+        style TTS fill:#f59e0b,color:#fff,stroke:none
+    </pre>
+  </div>
+
+  <h3>Components</h3>
+
+  <table class="tool-matrix">
+    <thead>
+      <tr><th>Component</th><th>File</th><th>Technology</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Speech-to-Text</strong></td>
+        <td><code>app/voice/stt.py</code></td>
+        <td>Groq Whisper <code>whisper-large-v3-turbo</code></td>
+        <td>Returns text + language + confidence. Supports webm, wav, mp3, m4a, ogg, flac. Falls back across 3 Groq API keys. Max 25MB file size.</td>
+      </tr>
+      <tr>
+        <td><strong>Text-to-Speech</strong></td>
+        <td><code>app/voice/tts.py</code></td>
+        <td><code>edge-tts</code> (Microsoft Edge TTS)</td>
+        <td>Arabic: <code>ar-EG-SalmaNeural</code>, English: <code>en-US-JennyNeural</code>. Returns audio/mpeg. Max 2000 characters.</td>
+      </tr>
+      <tr>
+        <td><strong>Voice Router</strong></td>
+        <td><code>app/voice/router.py</code></td>
+        <td>FastAPI <code>APIRouter(prefix="/voice")</code></td>
+        <td><code>POST /voice/stt</code> (multipart) + <code>POST /voice/tts</code> (JSON).</td>
+      </tr>
+      <tr>
+        <td><strong>Backend Proxy</strong></td>
+        <td><code>Backend/app/routers/chat.py</code></td>
+        <td>HTTP proxy to chatbot service</td>
+        <td><code>POST /api/v1/chat/stt</code> and <code>POST /api/v1/chat/tts</code> forward to chatbot :8001.</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend Hook</strong></td>
+        <td><code>Frontend/hooks/useVoice.ts</code></td>
+        <td>React hooks + MediaRecorder API</td>
+        <td>Records via <code>getUserMedia</code>, sends blob to <code>/chat/stt</code>, returns transcript. Supports <code>start/stop/cancel</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>TTS Hook</strong></td>
+        <td><code>Frontend/hooks/useTTS.ts</code></td>
+        <td>React hook + Web Audio API</td>
+        <td>Sends text to <code>/chat/tts</code>, plays returned audio. Supports <code>speak/stop</code> with state tracking.</td>
+      </tr>
+      <tr>
+        <td><strong>Chat Input</strong></td>
+        <td><code>Frontend/components/chat/ChatInput.tsx</code></td>
+        <td>React component</td>
+        <td>Mic button integrated into input bar. Uses <code>useVoice</code> hook for recording.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Flow</h3>
+  <ol>
+    <li>User presses mic button in <code>ChatInput</code> — <code>useVoice.startRecording()</code> activates <code>MediaRecorder</code>.</li>
+    <li>User releases mic — recording stops, WebM blob is sent to <code>POST /api/v1/chat/stt</code>.</li>
+    <li>Backend proxies to chatbot's <code>POST /voice/stt</code> → Groq Whisper transcribes → returns <code>{text, language, confidence}</code>.</li>
+    <li>Frontend receives transcribed text and submits it as a chat message.</li>
+    <li>Optionally, AI response can be read aloud via <code>useTTS.speak()</code> → <code>POST /chat/tts</code> → edge-tts → audio playback.</li>
+  </ol>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 12: LANGSMITH TRACING                                   -->
+  <!-- ================================================================ -->
+  <h2>12. LangSmith Tracing</h2>
   <p>
     All LLM calls across both services are traced to <strong>LangSmith</strong> for observability.
     Environment variables are loaded at service startup via <code>python-dotenv</code>
@@ -1155,29 +1606,39 @@
   <ul>
     <li><strong>Graph runs</strong> — each <code>graph.astream()</code> call creates a top-level trace</li>
     <li><strong>Node executions</strong> — each graph node is a child span, named by its function name</li>
-    <li><strong>LLM calls</strong> — every <code>ainvoke()</code> and <code>astream()</code> call, showing prompt, response, token counts, latency</li>
-    <li><strong>Tool calls</strong> — DB queries, vector search, web search calls are captured as nested spans</li>
+    <li><strong>LLM calls</strong> — every <code>ainvoke_task()</code> and <code>astream_task()</code> call, showing provider tier (fast vs powerful), prompt, response, token counts, latency</li>
+    <li><strong>Tool calls</strong> — DB queries, hybrid search, web search, cache hits/misses are captured as nested spans</li>
+    <li><strong>Guardrails</strong> — input validation results flagged as annotations</li>
+    <li><strong>Client disconnect</strong> — cancellation events logged when client drops SSE</li>
   </ul>
 
   <h3>Trace Tree Example</h3>
   <pre><code>graph.astream  (top-level trace, name="LangGraph")
+├── guardrails.validate_input  (regex check, no LLM call)
 ├── preference_extractor
-│   └── FallbackLLM.ainvoke  (prompt tokens: ~250, completion: ~90)
+│   ├── MultiLLM.ainvoke_task("preference_extractor")  — fast model (tokens: ~250 + ~90)
+│   └── MCPToolRegistry.call_tool("expand_brand_origins")  — analysis server
 ├── router
-│   └── FallbackLLM.ainvoke  (prompt tokens: ~400, completion: ~15)
+│   ├── SemanticCache.get  (cache check — miss/hit)
+│   └── MultiLLM.ainvoke_task("router")  — fast model, cached (tokens: ~400 + ~15)
 ├── catalogue_node
-│   └── FallbackLLM.ainvoke  (prompt tokens: ~350, completion: ~60)
+│   ├── MultiLLM.ainvoke_task("catalogue_check")  — fast model (tokens: ~350 + ~60)
+│   └── MCPToolRegistry.call_tool("check_catalogue")  — car-search server → PostgreSQL
 ├── search_node
-│   ├── FallbackLLM.ainvoke  (query builder, tokens: ~200 + ~80)
-│   ├── embedder.encode      (vector embedding call)
-│   ├── qdrant_search.search (vector DB query)
-│   └── FallbackLLM.astream  (response generation, tokens: ~250 + ~150)
-└── responder_node           (no LLM call, only SSE + DB persistence)</code></pre>
+│   ├── MultiLLM.ainvoke_task("search")  — powerful model, query builder (tokens: ~200 + ~80)
+│   ├── SemanticCache.get → embedder.encode  — cached embedding hit
+│   ├── MCPToolRegistry.call_tool("search_cars")  — car-search server → Qdrant hybrid
+│   ├── MCPToolRegistry.call_tool("get_car_images")  — car-search server → PostgreSQL
+│   └── MultiLLM.astream_task("search")  — powerful model, streaming (tokens: ~250 + ~150)
+└── responder_node
+    ├── SSE streaming (status, token, cars, done)
+    ├── insert_chat_message  (DB persist)
+    └── client disconnect check → cancel if dropped</code></pre>
 
   <!-- ================================================================ -->
-  <!-- SECTION 10: DEPLOYMENT                                          -->
+  <!-- SECTION 13: DEPLOYMENT                                          -->
   <!-- ================================================================ -->
-  <h2>10. Deployment</h2>
+  <h2>13. Deployment</h2>
   <p>All services run in Docker containers orchestrated by <code>docker-compose.yml</code> with an Nginx reverse proxy.</p>
 
   <h3>Service Map</h3>
@@ -1233,9 +1694,9 @@ location /               { proxy_pass http://frontend; }    # :3000</code></pre>
   </div>
 
   <!-- ================================================================ -->
-  <!-- SECTION 11: FRONTEND COMPONENTS                                 -->
+  <!-- SECTION 14: FRONTEND ARCHITECTURE                               -->
   <!-- ================================================================ -->
-  <h2>11. Frontend Architecture</h2>
+  <h2>14. Frontend Architecture</h2>
   <p>Next.js app with App Router, Zustand for state, Framer Motion for animations.</p>
 
   <h3>Key Components</h3>
@@ -1290,6 +1751,13 @@ location /               { proxy_pass http://frontend; }    # :3000</code></pre>
       </tr>
     </tbody>
   </table>
+
+  <h3>Voice Integration</h3>
+  <ul>
+    <li><code>useVoice</code> (<code>hooks/useVoice.ts</code>) — records audio via <code>MediaRecorder</code> API, sends blob to <code>POST /api/v1/chat/stt</code>, returns transcribed text. States: idle → recording → processing → error.</li>
+    <li><code>useTTS</code> (<code>hooks/useTTS.ts</code>) — sends text to <code>POST /api/v1/chat/tts</code>, plays returned MP3 audio via <code>Audio</code> API. States: idle → loading → playing → error.</li>
+    <li>Mic button integrated into <code>ChatInput</code> component — long-press to record, release to submit.</li>
+  </ul>
 
   <h3>State Management (Zustand Stores)</h3>
   <ul>

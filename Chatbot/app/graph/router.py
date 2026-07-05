@@ -41,7 +41,7 @@ catalogue_node | advisor_node | seller_node | guide_node | general_node
 
 
 async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
-    llm_fast = config["configurable"]["llm_fast"]
+    llm_router = config["configurable"].get("llm_router")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
     prefs = state.get("preferences", {})
@@ -57,16 +57,28 @@ async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
         f"{k}={v}" for k, v in prefs.items() if v and (not isinstance(v, list) or v)
     ) or "none yet"
 
-    response = await llm_fast.ainvoke([
-        SystemMessage(content=ROUTER_SYSTEM.format(
-            message_history=message_history,
-            has_context="yes" if state.get("context_ad_id") else "no",
-            is_seller="yes" if prefs.get("is_seller") else "no",
-            preferences_summary=pref_summary,
-            latest_message=last_message,
-        )),
-        HumanMessage(content=last_message),
-    ])
+    if llm_router:
+        response = await llm_router.ainvoke_task("router", [
+            SystemMessage(content=ROUTER_SYSTEM.format(
+                message_history=message_history,
+                has_context="yes" if state.get("context_ad_id") else "no",
+                is_seller="yes" if prefs.get("is_seller") else "no",
+                preferences_summary=pref_summary,
+                latest_message=last_message,
+            )),
+            HumanMessage(content=last_message),
+        ])
+    else:
+        response = await config["configurable"]["llm_fast"].ainvoke([
+            SystemMessage(content=ROUTER_SYSTEM.format(
+                message_history=message_history,
+                has_context="yes" if state.get("context_ad_id") else "no",
+                is_seller="yes" if prefs.get("is_seller") else "no",
+                preferences_summary=pref_summary,
+                latest_message=last_message,
+            )),
+            HumanMessage(content=last_message),
+        ])
 
     node_name = response.content.strip().lower() if response.content else "general_node"
 

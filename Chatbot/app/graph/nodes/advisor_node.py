@@ -1,9 +1,12 @@
 import json
+import logging
 from uuid import UUID
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from app.graph.state import CarsChatState
 from app.core.hallucination_guard import build_grounding_block, validate_response
+
+logger = logging.getLogger(__name__)
 
 
 ADVISOR_SYSTEM = """You are a car expert assistant helping a user evaluate a specific car listing.
@@ -39,6 +42,7 @@ User message: "{message}"
 
 
 async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
+    llm_router = config["configurable"].get("llm_router")
     llm_fast = config["configurable"]["llm_fast"]
     llm_stream = config["configurable"]["llm_stream"]
     embedder = config["configurable"]["embedder"]
@@ -61,8 +65,8 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 )
                 if row:
                     ad_payload = dict(row)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to fetch context ad %s: %s: %s", context_ad_id, type(e).__name__, str(e)[:200])
 
     if not ad_payload and retrieved:
         if len(retrieved) == 1:
@@ -74,7 +78,7 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 f"{c.get('price','')} EGP - {c.get('city','')}"
                 for i, c in enumerate(retrieved)
             )
-            pick_resp = await llm_fast.ainvoke([
+            pick_msgs = [
                 SystemMessage(content=(
                     "The user had these search results and is now asking a follow-up.\n"
                     f"Cars:\n{cars_list}\n\n"
@@ -83,17 +87,25 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
                     "or 0 if none matches."
                 )),
                 HumanMessage(content=last_message),
-            ])
+            ]
+            if llm_router:
+                pick_resp = await llm_router.ainvoke_task("advisor", pick_msgs)
+            else:
+                pick_resp = await llm_fast.ainvoke(pick_msgs)
             try:
                 idx = int(pick_resp.content.strip()) - 1
                 if 0 <= idx < len(retrieved):
                     ad_payload = retrieved[idx]
             except (ValueError, IndexError):
-                # Default to first result
                 ad_payload = retrieved[0]
 
     if not ad_payload:
-        return {"next_node": "general_node", "node_response": ""}
+        fallback = (
+            "I couldn't find that specific car in your current results. "
+            "Would you like me to search again with different filters "
+            "or try a different car instead?"
+        )
+        return {"node_response": fallback}
 
     # Step 2: Build grounded context
     grounding_block = build_grounding_block(ad_payload)
@@ -110,8 +122,8 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
             results = web_search.search(search_query)
             if results:
                 web_context = f"\n\nSupplementary web info for {brand} {model}:\n{results}"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Web search in advisor_node failed: %s: %s", type(e).__name__, str(e)[:200])
 
     # Build message history summary
     history_msgs = []
@@ -121,23 +133,29 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
 
     # Step 3: LLM response (streaming)
     streamed_text = ""
-    async for chunk in llm_stream.astream([
+    response_msgs = [
         SystemMessage(content=ADVISOR_SYSTEM.format(
             grounding_block=grounding_block,
             web_context=web_context,
             message_history=message_history,
         )),
         HumanMessage(content=last_message),
-    ]):
-        content = chunk.content if hasattr(chunk, "content") else str(chunk)
-        streamed_text += content
+    ]
+    if llm_router:
+        async for chunk in llm_router.astream_task("advisor", response_msgs):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            streamed_text += content
+    else:
+        async for chunk in llm_stream.astream(response_msgs):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            streamed_text += content
 
     # Step 4: Validate response
     streamed_text = validate_response(streamed_text, ad_payload)
 
     # Step 5: Extract refined preferences
     try:
-        pref_response = await llm_fast.ainvoke([
+        pref_msgs = [
             SystemMessage(content=PREF_REFINE_SYSTEM.format(
                 brand=ad_payload.get("brand", ""),
                 model=ad_payload.get("model", ""),
@@ -147,7 +165,11 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 message=last_message,
             )),
             HumanMessage(content=last_message),
-        ])
+        ]
+        if llm_router:
+            pref_response = await llm_router.ainvoke_task("preference_extractor", pref_msgs)
+        else:
+            pref_response = await llm_fast.ainvoke(pref_msgs)
         extracted = json.loads(pref_response.content.strip().removeprefix("```json").removesuffix("```").strip())
         merged = dict(state.get("preferences", {}))
         for key, val in extracted.items():
@@ -175,22 +197,41 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
             )
 
         pref_update = {"preferences": merged}
-    except Exception:
+    except Exception as e:
+        logger.warning("Preference refinement in advisor_node failed: %s: %s", type(e).__name__, str(e)[:200])
         pref_update = {}
 
-    # Step 6: Fetch similar cars
+    # Step 6: Fetch similar cars (MCP or direct)
     similar_ads = []
     try:
-        text_to_embed = (
+        car_text = (
             f"{ad_payload.get('brand', '')} {ad_payload.get('model', '')} "
             f"{ad_payload.get('year', '')} {ad_payload.get('body_type', '')}"
         ).lower()
-        vector = embedder.encode(text_to_embed)
-        similar = qdrant_search.search(
-            vector=vector,
-            limit=3,
-            exclude_ad_id=str(ad_payload.get("ad_id", "")),
-        )
+        mcp_registry = config["configurable"].get("mcp_registry")
+        similar = []
+        if mcp_registry:
+            try:
+                mcp_result = await mcp_registry.call_tool("find_similar_cars", {
+                    "brand": ad_payload.get("brand", ""),
+                    "model": ad_payload.get("model", ""),
+                    "year": ad_payload.get("year"),
+                    "body_type": ad_payload.get("body_type"),
+                    "exclude_ad_id": str(ad_payload.get("ad_id", "")),
+                    "limit": 4,
+                })
+                if isinstance(mcp_result, list):
+                    similar = mcp_result
+            except Exception as e:
+                logger.warning("MCP find_similar_cars failed, falling back: %s", e)
+        if not similar and qdrant_search:
+            vector = embedder.encode(car_text)
+            similar = qdrant_search.hybrid_search(
+                query_text=car_text,
+                vector=vector,
+                limit=4,
+                exclude_ad_id=str(ad_payload.get("ad_id", "")),
+            )
         for s in similar[:2]:
             similar_ads.append({
                 "id": s.get("ad_id", s["id"]),
@@ -202,8 +243,8 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 "cover_image_url": s.get("cover_image_url", ""),
                 "condition": s.get("condition", ""),
             })
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Similar car fetch in advisor_node failed: %s: %s", type(e).__name__, str(e)[:200])
 
     return {
         "node_response": streamed_text,

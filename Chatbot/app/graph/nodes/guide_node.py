@@ -28,30 +28,41 @@ Always respond in the same language as the user (Arabic or English).
 
 
 async def guide_node(state: CarsChatState, config: RunnableConfig) -> dict:
+    llm_router = config["configurable"].get("llm_router")
     llm_fast = config["configurable"]["llm_fast"]
     llm_stream = config["configurable"]["llm_stream"]
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
 
     # Step 1: Topic detection
-    topic_response = await llm_fast.ainvoke([
+    topic_msgs = [
         SystemMessage(content=TOPIC_DETECT_SYSTEM.format(message=last_message)),
         HumanMessage(content=last_message),
-    ])
+    ]
+    if llm_router:
+        topic_response = await llm_router.ainvoke_task("guide_topic", topic_msgs)
+    else:
+        topic_response = await llm_fast.ainvoke(topic_msgs)
     detected_topic = topic_response.content.strip().lower() if topic_response.content else "other"
 
     # Step 2: Guide response (streaming)
     streamed_text = ""
-    async for chunk in llm_stream.astream([
+    response_msgs = [
         SystemMessage(content=GUIDE_SYSTEM.format(
             detected_topic=detected_topic,
             message=last_message,
             website_guide=format_website_guide(),
         )),
         HumanMessage(content=last_message),
-    ]):
-        content = chunk.content if hasattr(chunk, "content") else str(chunk)
-        streamed_text += content
+    ]
+    if llm_router:
+        async for chunk in llm_router.astream_task("guide", response_msgs):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            streamed_text += content
+    else:
+        async for chunk in llm_stream.astream(response_msgs):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            streamed_text += content
 
     return {
         "node_response": streamed_text,

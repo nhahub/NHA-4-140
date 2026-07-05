@@ -8,6 +8,12 @@ class Settings(BaseSettings):
     groq_model: str = "openai/gpt-oss-120b"
     groq_model_fallback: str = "qwen/qwen3.6-27b"
 
+    # OpenRouter for powerful LLM fallback / complex tasks
+    openrouter_api_key: str = ""
+    openrouter_api_key_fallback: str = ""
+    openrouter_model: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    openrouter_vision_model: str = "google/gemini-2.0-flash-exp:free"
+
     database_url: str
 
     qdrant_url: str
