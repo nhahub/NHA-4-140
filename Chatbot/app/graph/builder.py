@@ -18,6 +18,27 @@ def route_after_catalogue(state: CarsChatState) -> str:
 
 
 def build_graph() -> "CompiledGraph":
+    # ── LangGraph Node / Agent Reference ───────────────────────────────────
+    # These node names appear as child run names in LangSmith traces,
+    # enabling per-agent visibility (inputs, outputs, latency, errors).
+    #
+    # Node name          Agent file                     Purpose
+    # ────────────────────────────────────────────────────────────────────────
+    # preference_extractor  nodes/preference_extractor   Two-pass preference extraction (needs + explicit)
+    # router                graph/router                 LLM-based routing → 1 of 5 specialists
+    # catalogue_node        nodes/catalogue_node         Catalogue availability check
+    # search_node           nodes/search_node            Query building + Qdrant vector/hybrid search
+    # recommendation_node   nodes/recommendation_node    Alternative recommendations when exact match missing
+    # advisor_node          nodes/advisor_node           Evaluate a specific listing (grounded + hallucination guard)
+    # seller_node           nodes/seller_node            Seller pricing analysis + listing tips
+    # guide_node            nodes/guide_node             Website usage guidance
+    # general_node          nodes/general_node           General car knowledge, market context, unclear intents
+    # responder_node        nodes/responder_node         SSE emitter — status/token/cars/done events
+    #
+    # Edge flow: preference_extractor → router →
+    #   catalogue_node | advisor_node | seller_node | guide_node | general_node →
+    #   (catalogue_node → search_node | recommendation_node) → responder_node → END
+    # ────────────────────────────────────────────────────────────────────────
     builder = StateGraph(CarsChatState)
 
     builder.add_node("preference_extractor", preference_extractor_node)

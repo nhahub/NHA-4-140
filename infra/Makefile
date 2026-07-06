@@ -12,10 +12,12 @@ up:
 	docker compose up -d
 	@echo ""
 	@echo "All services starting..."
-	@echo "  Frontend:   http://localhost"
-	@echo "  Backend:    http://localhost:8000/docs"
-	@echo "  Chatbot:    http://localhost:8001/docs"
-	@echo "  Comparison: http://localhost:8002/docs"
+	@echo "  Frontend:    http://localhost"
+	@echo "  Backend:     http://localhost:8000/docs"
+	@echo "  Chatbot:     http://localhost:8001/docs"
+	@echo "  Comparison:  http://localhost:8002/docs"
+	@echo "  Prometheus:  http://localhost:9090"
+	@echo "  Grafana:     http://localhost:3001 (admin/admin)"
 
 up-logs:
 	docker compose up

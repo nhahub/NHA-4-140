@@ -1,7 +1,9 @@
 from duckduckgo_search import DDGS
+from langsmith import traceable
 
 
 class WebSearch:
+    @traceable(run_type="tool")
     def search(self, query: str, max_results: int = 5) -> str:
         try:
             with DDGS() as ddgs:

@@ -17,6 +17,8 @@ from app.core.web_search import WebSearch
 from app.core.mcp_client import MCPToolRegistry
 from app.core.mcp.servers import car_search_server, analysis_server
 from app.graph.builder import build_graph
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from app.routers import chat as chat_router
 from app.voice import router as voice_router
 
@@ -169,6 +171,8 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+Instrumentator().instrument(app).expose(app)
 
 app.include_router(chat_router.router)
 app.include_router(voice_router.router)

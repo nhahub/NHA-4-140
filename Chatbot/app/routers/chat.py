@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage, AIMessage
 
+from app.config import settings
 from app.core.cost_tracker import CostTracker
 
 logger = logging.getLogger(__name__)
@@ -78,9 +79,14 @@ async def chat_message(request: ChatRequest, req: Request):
 
             config = {
                 "callbacks": [cost_tracker],
-                "run_name": "LangGraph_Chat",
-                "metadata": {"session_id": session_token},
-                "tags": ["langgraph", "chat"],
+                "run_name": f"deals-chatbot-{settings.environment}",
+                "metadata": {
+                    "session_id": session_token,
+                    "user_id": request.user_id,
+                    "conversation_id": session_token,
+                    "environment": settings.environment,
+                },
+                "tags": ["langgraph", "chat", f"env:{settings.environment}"],
                 "configurable": {
                     "thread_id": request.session_token,
                     "llm_router": getattr(app.state, "llm_router", None),

@@ -42,6 +42,8 @@ Visit **http://localhost** — the full app should be live.
 | http://localhost:8000/docs | Backend Swagger UI |
 | http://localhost:8001/docs | Chatbot Swagger UI |
 | http://localhost:8002/docs | Comparison Swagger UI |
+| http://localhost:9090 | Prometheus |
+| http://localhost:3001 | Grafana (admin/admin) |
 
 ## Daily Commands
 
@@ -58,27 +60,52 @@ Visit **http://localhost** — the full app should be live.
 | `make clean` | Stop + remove volumes |
 | `make nuke` | Remove everything including images |
 
+## Monitoring (Prometheus + Grafana)
+
+Each Python service exposes Prometheus metrics at `/metrics`:
+
+| Service    | Metrics URL                         |
+|------------|-------------------------------------|
+| Backend    | http://localhost:8000/metrics       |
+| Chatbot    | http://localhost:8001/metrics       |
+| Comparison | http://localhost:8002/metrics       |
+
+**Prometheus** scrapes all three every 15s and is available at http://localhost:9090.
+
+**Grafana** at http://localhost:3001 (admin/admin) comes pre-provisioned:
+- A Prometheus datasource auto-connected
+- A **FastAPI Service Overview** dashboard with:
+  - Requests per second
+  - Request duration (p50, p95, p99)
+  - HTTP error rate (%)
+
+You can add more dashboards via the Grafana UI — they will persist as long as the container volume exists.
+
 ## Architecture
 
 ```
-Browser ──> nginx (:80)
-                │
-        ┌───────┼───────────────┐
-        │       │               │
-    frontend  /api/*      SSE routes
-    (:3000)    │               │
-            backend      backend
-            (:8000)     (chat/compare)
-               │
-        ┌──────┴──────┐
-    chatbot     comparison
-    (:8001)      (:8002)
+Browser ──> nginx (:80)              Prometheus ──> Grafana
+                │                        │
+        ┌───────┼───────────────┐  ┌─────┼─────┐
+        │       │               │  │     │     │
+    frontend  /api/*      SSE routes │     │     │
+    (:3000)    │               │  │     │     │
+            backend      backend  │     │     │
+            (:8000)     (chat/compare) │     │
+               │               │  │     │     │
+        ┌──────┴──────┐        │  │     │     │
+    chatbot     comparison     │  │     │     │
+    (:8001)      (:8002)       │  │     │     │
+                │               │  │     │     │
+                └───────────────┘  └─────┴─────┘
+                 /metrics endpoints   scrape :8000,:8001,:8002
 ```
 
 - All internal traffic uses container names (`backend:8000`, `chatbot:8001`)
 - Browser calls `http://localhost` — nginx routes to the right service
 - SSE routes (`/api/v1/chat/`, `/api/v1/compare`) have `proxy_buffering off`
 - Chat SSE timeout: 3600s. Compare SSE timeout: 180s.
+- Prometheus scrapes `/metrics` on each Python service; Grafana queries Prometheus
 
 ## Architecture Diagrams
 

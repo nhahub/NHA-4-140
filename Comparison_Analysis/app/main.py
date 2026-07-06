@@ -11,6 +11,8 @@ from app.config import settings
 from app.core.llm import get_llm
 from app.core.openrouter import get_openrouter_llm
 from app.core.tavily import TavilyWrapper
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from app.routers import compare as compare_router
 
 logging.basicConfig(level=logging.INFO)
@@ -46,3 +48,5 @@ app = FastAPI(
 )
 
 app.include_router(compare_router.router)
+
+Instrumentator().instrument(app).expose(app)

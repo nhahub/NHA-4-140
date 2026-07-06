@@ -23,7 +23,20 @@ class Settings(BaseSettings):
     environment: str = "development"
     chatbot_port: int = 8001
 
+    # LangSmith tracing configuration
+    langchain_tracing_v2: bool = True
+    langchain_api_key: str = ""
+    langchain_project: str = ""
+    langchain_endpoint: str = "https://api.smith.langchain.com"
+
     model_config = {"env_file": "../.env", "env_file_encoding": "utf-8", "extra": "ignore"}
+
+    @property
+    def langsmith_project(self) -> str:
+        if self.langchain_project:
+            return self.langchain_project
+        suffix = "prod" if self.environment == "production" else "dev"
+        return f"deals-chatbot-{suffix}"
 
 
 settings = Settings()

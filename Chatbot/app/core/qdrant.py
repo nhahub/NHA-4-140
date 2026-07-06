@@ -2,6 +2,7 @@ import logging
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 from typing import Optional, List
+from langsmith import traceable
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,7 @@ class QdrantSearch:
             qmodels.Filter(must=must) if must else qmodels.Filter(must_not=must_not)
         )
 
+    @traceable(run_type="retriever", metadata={"collection": settings.qdrant_collection})
     def search(
         self,
         vector: list[float],
@@ -141,6 +143,7 @@ class QdrantSearch:
 
         return points
 
+    @traceable(run_type="retriever", metadata={"collection": settings.qdrant_collection})
     def hybrid_search(
         self,
         query_text: str,

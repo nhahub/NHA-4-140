@@ -1,5 +1,6 @@
 import re
 import logging
+from langsmith import traceable
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ _MAX_INPUT_LENGTH = 2000
 _MAX_OUTPUT_LENGTH = 4000
 
 
+@traceable(run_type="chain")
 def validate_input(text: str) -> tuple[bool, str]:
     """Validate user input for safety and sanity.
 

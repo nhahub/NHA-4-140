@@ -1,5 +1,6 @@
 import hashlib
 from fastembed import TextEmbedding
+from langsmith import traceable
 from app.core.cache import embedding_cache
 
 
@@ -8,6 +9,7 @@ class Embedder:
         full_name = f"sentence-transformers/{model_name}"
         self.model = TextEmbedding(model_name=full_name)
 
+    @traceable(run_type="embedding", metadata={"model": "all-MiniLM-L6-v2"})
     def encode(self, text: str) -> list[float]:
         cache_key = hashlib.sha256(text.encode("utf-8")).hexdigest()
         cached = embedding_cache.get(cache_key)
