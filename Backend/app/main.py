@@ -345,7 +345,7 @@ async def internal_handler(request: Request, exc: Exception):
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from app.routers import auth, users, ads, favorites, search, chat, compare, compare_ai, analytics, site_assets
+from app.routers import auth, users, ads, favorites, search, chat, compare, compare_ai, analytics, site_assets, price_analysis
 
 Instrumentator().instrument(app).expose(app)
 
@@ -359,6 +359,7 @@ app.include_router(compare.router, prefix="/api/v1")
 app.include_router(compare_ai.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(site_assets.router, prefix="/api/v1")
+app.include_router(price_analysis.router, prefix="/api/v1")
 
 
 @app.get("/health")

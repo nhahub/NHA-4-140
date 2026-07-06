@@ -15,6 +15,7 @@ from app.core.cache import RedisClient
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.routers import compare as compare_router
+from app.routers import price_analysis as price_analysis_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,5 +56,6 @@ app = FastAPI(
 )
 
 app.include_router(compare_router.router)
+app.include_router(price_analysis_router.router)
 
 Instrumentator().instrument(app).expose(app)
