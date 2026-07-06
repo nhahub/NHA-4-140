@@ -8,7 +8,7 @@ SEARCH_QUALITY_AVG_SCORE_MIN = 0.5
 # ---- Search result limits ----
 SEARCH_INITIAL_LIMIT = 5
 SEARCH_BROAD_LIMIT = 10
-MERGE_MAX_COUNT = 5
+MERGE_MAX_COUNT = 2
 
 # ---- Recommendation search limits ----
 RECOMMENDATION_LIMIT = 8

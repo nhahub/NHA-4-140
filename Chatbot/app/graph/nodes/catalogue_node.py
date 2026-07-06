@@ -32,8 +32,7 @@ Return ONLY valid JSON. No explanation, no markdown:
   "request_label": "short description of what user asked for"
 }}
 
-User message: "{message}"
-Accumulated preferences: {preferences_json}"""
+User message: "{message}" """
 
 
 def _clean_json(text: str) -> str:
@@ -52,14 +51,11 @@ async def catalogue_node(state: CarsChatState, config: RunnableConfig) -> dict:
     mcp_registry = config["configurable"].get("mcp_registry")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
-    prefs = state.get("preferences", {})
-    prefs_json = json.dumps(prefs, ensure_ascii=False, default=str)
 
     # Step 1: LLM extracts exact request
     messages = [
         SystemMessage(content=EXTRACT_CATALOGUE_SYSTEM.format(
             message=last_message,
-            preferences_json=prefs_json,
             brand_origins_prompt=format_brand_origins_prompt(),
         )),
         HumanMessage(content=last_message),

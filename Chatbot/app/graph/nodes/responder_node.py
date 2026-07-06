@@ -1,4 +1,3 @@
-import json
 import asyncio
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
@@ -84,7 +83,7 @@ async def responder_node(state: CarsChatState, config: RunnableConfig) -> dict:
 
     # 7. Background persistence tasks
     if pool:
-        from app.db.queries import insert_chat_message, upsert_user_preferences
+        from app.db.queries import insert_chat_message
 
         # Find referenced ad IDs
         ref_ids = []
@@ -107,14 +106,6 @@ async def responder_node(state: CarsChatState, config: RunnableConfig) -> dict:
         # Fire-and-forget: insert assistant response
         asyncio.ensure_future(
             insert_chat_message(pool, session_token, "assistant", node_response, node_used=intent, referenced_ad_ids=ref_ids if ref_ids else None)
-        )
-
-        # Fire-and-forget: update turn count
-        prefs = dict(state.get("preferences", {}))
-        prefs["intent_history"] = state.get("intent_history", [])
-        prefs["turn_count"] = state.get("turn_count", 0)
-        asyncio.ensure_future(
-            upsert_user_preferences(pool, session_token, state.get("user_id"), prefs)
         )
 
     # 8. Emit done event (after all tokens have been sent)

@@ -18,13 +18,14 @@ from app.data.constants import (
 logger = logging.getLogger(__name__)
 
 QUERY_BUILDER_SYSTEM = """You are a search query builder for a car marketplace vector database.
-Given the user's message and their accumulated preferences, build the best
+Given the user's message and the conversation history, build the best
 possible search query string that will retrieve relevant car listings.
 
 Rules:
-1. Extract ONLY clear metadata filters: brand, price_min, price_max, city, 
-   fuel_type, transmission, body_types. If uncertain, leave null/[]. 
-   body_types is a LIST — even for a single body type, use ["sedan"].
+1. Extract ONLY clear metadata filters from the ENTIRE conversation: brand, 
+   price_min, price_max, city, fuel_type, transmission, body_types. 
+   If uncertain, leave null/[]. body_types is a LIST — even for a single 
+   body type, use ["sedan"].
 2. NEVER extract "condition" filter from words like "conditioner", 
    "conditioning", "AC", "air conditioning" — these are car FEATURES, not 
    the car's mechanical condition.
@@ -55,7 +56,8 @@ Return ONLY valid JSON:
 }}
 
 User message: "{message}"
-Accumulated preferences: {preferences_json}"""
+Conversation history:
+{conversation_history}"""
 
 RESPONSE_SYSTEM = """You are a helpful car marketplace assistant.
 You have just searched the listings and found the following cars that match
@@ -113,13 +115,18 @@ async def search_node(state: CarsChatState, config: RunnableConfig) -> dict:
     mcp_registry = config["configurable"].get("mcp_registry")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
-    prefs = state.get("preferences", {})
 
-    # Step 1: Build enhanced search query
-    prefs_json = json.dumps(prefs, ensure_ascii=False, default=str)
+    # Build conversation history from last 6 messages (3 user+assistant pairs)
+    history_msgs = []
+    for m in state.get("messages", [])[-6:]:
+        role = "user" if m.type == "human" else "assistant"
+        history_msgs.append(f"{role}: {m.content}")
+    conversation_history = "\n".join(history_msgs) if history_msgs else "No prior conversation."
+
+    # Step 1: Build enhanced search query from conversation history
     system_msg = SystemMessage(content=QUERY_BUILDER_SYSTEM.format(
         message=last_message,
-        preferences_json=prefs_json,
+        conversation_history=conversation_history,
         expansions_prompt=format_expansions_prompt(),
     ))
     if llm_router:
@@ -135,28 +142,12 @@ async def search_node(state: CarsChatState, config: RunnableConfig) -> dict:
         search_query = last_message
         filters = {}
 
-    # Step 2: Search via MCP or direct
+    # Step 2: Extract filters from the query builder output only
     brand_filter = filters.get("brand")
-    if not brand_filter:
-        prefs_brands = prefs.get("preferred_brands", [])
-        if prefs_brands:
-            brand_filter = prefs_brands
-
-    # Combine explicit + inferred body types
     body_types = list(filters.get("body_types") or [])
-    prefs_body_types = prefs.get("preferred_body_types", [])
-    inferred_body_types = prefs.get("inferred_body_types", [])
-    if not body_types:
-        body_types = list(prefs_body_types)
-    if not body_types and inferred_body_types:
-        from app.data.constants import USE_INFERRED_AS_HARD_FILTER
-        if USE_INFERRED_AS_HARD_FILTER:
-            body_types = list(inferred_body_types)
-
-    # Pass exclusions from preferences
-    excluded_body_types = prefs.get("excluded_body_types", None)
-    excluded_brands = prefs.get("excluded_brands", None)
-    excluded_models = prefs.get("excluded_models", None)
+    excluded_body_types = filters.get("excluded_body_types")
+    excluded_brands = filters.get("excluded_brands")
+    excluded_models = filters.get("excluded_models")
 
     results = []
     if mcp_registry:
@@ -175,8 +166,6 @@ async def search_node(state: CarsChatState, config: RunnableConfig) -> dict:
                 "excluded_body_types": excluded_body_types,
                 "excluded_brands": excluded_brands,
                 "excluded_models": excluded_models,
-                "year_min": prefs.get("year_min"),
-                "year_max": prefs.get("year_max"),
             })
             if isinstance(mcp_results, list):
                 results = mcp_results
@@ -200,8 +189,6 @@ async def search_node(state: CarsChatState, config: RunnableConfig) -> dict:
             excluded_body_types=excluded_body_types,
             excluded_brands=excluded_brands,
             excluded_models=excluded_models,
-            year_min=prefs.get("year_min"),
-            year_max=prefs.get("year_max"),
         )
 
     results = verify_results(results)
@@ -239,9 +226,9 @@ async def search_node(state: CarsChatState, config: RunnableConfig) -> dict:
         broader_results = verify_results(broader_results)
         broader_dcg = compute_dcg(broader_results)
         if broader_dcg > search_dcg:
-            results = merge_dedup_results(broader_results, results, max_count=5)
+            results = merge_dedup_results(broader_results, results, max_count=MERGE_MAX_COUNT)
         else:
-            results = merge_dedup_results(results, broader_results, max_count=5)
+            results = merge_dedup_results(results, broader_results, max_count=MERGE_MAX_COUNT)
 
     # Step 3: Fetch images and build ad list
     ad_ids = []
@@ -326,33 +313,7 @@ async def search_node(state: CarsChatState, config: RunnableConfig) -> dict:
             content = chunk.content if hasattr(chunk, "content") else str(chunk)
             streamed_text += content
 
-    # Step 5: Proactive new-match check
-    new_match_ads = []
-    try:
-        if pool and prefs:
-            from app.db.queries import get_new_matching_ads
-            session_start = config["configurable"].get("session_start")
-            if session_start:
-                import datetime
-                created_at_dt = datetime.datetime.fromtimestamp(session_start)
-                new_ads = await get_new_matching_ads(pool, created_at_dt, prefs)
-                for a in new_ads:
-                    ad = {
-                        "id": str(a["id"]),
-                        "brand": a["brand"],
-                        "model": a["model"],
-                        "year": a["year"],
-                        "price": float(a["price"]),
-                        "city": a["city"],
-                        "_is_new_match": True,
-                    }
-                    new_match_ads.append(ad)
-    except Exception as e:
-        logger.warning("New match check failed: %s: %s", type(e).__name__, str(e)[:200])
-
-    all_ads = ads + new_match_ads
-
     return {
-        "retrieved_ads": all_ads,
+        "retrieved_ads": ads[:MERGE_MAX_COUNT],
         "node_response": streamed_text,
     }

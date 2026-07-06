@@ -1,4 +1,3 @@
-import json
 import logging
 from uuid import UUID
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -30,17 +29,6 @@ Rules:
 Conversation history:
 {message_history}
 """
-
-PREF_REFINE_SYSTEM = """The user was asking about a {brand} {model} {year} listed at {price} EGP.
-Did the user express any preference signals? (liked the price, concerned about km,
-wanted automatic, preferred a different city, etc.)
-Extract any NEW signals not already in their preferences.
-Return ONLY JSON with the same preference schema. Use null for unchanged fields.
-
-Existing preferences: {preferences_json}
-User message: "{message}"
-"""
-
 
 async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
     llm_router = config["configurable"].get("llm_router")
@@ -154,55 +142,7 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
     # Step 4: Validate response
     streamed_text = validate_response(streamed_text, ad_payload)
 
-    # Step 5: Extract refined preferences
-    try:
-        pref_msgs = [
-            SystemMessage(content=PREF_REFINE_SYSTEM.format(
-                brand=ad_payload.get("brand", ""),
-                model=ad_payload.get("model", ""),
-                year=ad_payload.get("year", ""),
-                price=ad_payload.get("price", 0),
-                preferences_json=json.dumps(state.get("preferences", {}), ensure_ascii=False, default=str),
-                message=last_message,
-            )),
-            HumanMessage(content=last_message),
-        ]
-        if llm_router:
-            pref_response = await llm_router.ainvoke_task(TaskType.PREFERENCE_EXTRACTOR, pref_msgs)
-        else:
-            pref_response = await llm_fast.ainvoke(pref_msgs)
-        extracted = json.loads(pref_response.content.strip().removeprefix("```json").removesuffix("```").strip())
-        merged = dict(state.get("preferences", {}))
-        for key, val in extracted.items():
-            if val is None:
-                continue
-            if isinstance(val, list):
-                existing = merged.get(key, [])
-                if not isinstance(existing, list):
-                    existing = []
-                for item in val:
-                    if item not in existing:
-                        existing.append(item)
-                merged[key] = existing
-            else:
-                merged[key] = val
-
-        if pool:
-            import asyncio
-            from app.db.queries import upsert_user_preferences
-            prefs_for_db = dict(merged)
-            prefs_for_db["intent_history"] = state.get("intent_history", [])
-            prefs_for_db["turn_count"] = state.get("turn_count", 0)
-            asyncio.ensure_future(
-                upsert_user_preferences(pool, state["session_token"], state.get("user_id"), prefs_for_db)
-            )
-
-        pref_update = {"preferences": merged}
-    except Exception as e:
-        logger.warning("Preference refinement in advisor_node failed: %s: %s", type(e).__name__, str(e)[:200])
-        pref_update = {}
-
-    # Step 6: Fetch similar cars (MCP or direct)
+    # Step 5: Fetch similar cars (MCP or direct)
     similar_ads = []
     try:
         car_text = (
@@ -250,5 +190,4 @@ async def advisor_node(state: CarsChatState, config: RunnableConfig) -> dict:
     return {
         "node_response": streamed_text,
         "similar_ads": similar_ads,
-        **pref_update,
     }

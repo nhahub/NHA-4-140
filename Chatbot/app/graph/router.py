@@ -32,8 +32,6 @@ Conversation so far:
 
 Current context:
 - User has a car page open: {has_context}
-- User is identified as a seller: {is_seller}
-- User's accumulated preferences: {preferences_summary}
 
 Latest user message: "{latest_message}"
 
@@ -46,7 +44,6 @@ async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
     llm_router = config["configurable"].get("llm_router")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
-    prefs = state.get("preferences", {})
 
     # Build message history
     history_msgs = []
@@ -55,17 +52,11 @@ async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
         history_msgs.append(f"{role}: {m.content}")
     message_history = "\n".join(history_msgs) if history_msgs else "No prior conversation."
 
-    pref_summary = ", ".join(
-        f"{k}={v}" for k, v in prefs.items() if v and (not isinstance(v, list) or v)
-    ) or "none yet"
-
     if llm_router:
         response = await llm_router.ainvoke_task(TaskType.ROUTER, [
             SystemMessage(content=ROUTER_SYSTEM.format(
                 message_history=message_history,
                 has_context="yes" if state.get("context_ad_id") else "no",
-                is_seller="yes" if prefs.get("is_seller") else "no",
-                preferences_summary=pref_summary,
                 latest_message=last_message,
             )),
             HumanMessage(content=last_message),
@@ -75,8 +66,6 @@ async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
             SystemMessage(content=ROUTER_SYSTEM.format(
                 message_history=message_history,
                 has_context="yes" if state.get("context_ad_id") else "no",
-                is_seller="yes" if prefs.get("is_seller") else "no",
-                preferences_summary=pref_summary,
                 latest_message=last_message,
             )),
             HumanMessage(content=last_message),

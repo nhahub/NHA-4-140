@@ -88,22 +88,22 @@ Extract these fields (use null if not mentioned):
 {{
   "budget_min": null,
   "budget_max": null,
-  "preferred_brands": [],
-  "preferred_body_types": [],
-  "preferred_fuel_types": [],
+  "preferred_brands": null,
+  "preferred_body_types": null,
+  "preferred_fuel_types": null,
   "preferred_transmission": null,
-  "preferred_cities": [],
+  "preferred_cities": null,
   "max_km_driven": null,
   "year_min": null,
   "year_max": null,
   "use_case": null,
-  "is_seller": false,
+  "is_seller": null,
   "seller_car_brand": null,
   "seller_car_model": null,
   "seller_car_year": null,
   "seller_asking_price": null,
   "seller_intent": null,
-  "inferred_body_types": [],
+  "inferred_body_types": null,
   "inferred_min_seats": null,
   "inferred_use_case": null,
   "excluded_body_types": [],
@@ -305,11 +305,6 @@ async def preference_extractor_node(state: CarsChatState, config: RunnableConfig
         if excluded and positive_key in merged and isinstance(merged.get(positive_key), list):
             merged[positive_key] = [x for x in merged[positive_key] if x not in excluded]
 
-    updates = {
-        "preferences": merged,
-        "turn_count": state.get("turn_count", 0) + 1,
-    }
-
     if pool:
         import asyncio
         from app.db.queries import upsert_user_preferences
@@ -325,4 +320,6 @@ async def preference_extractor_node(state: CarsChatState, config: RunnableConfig
             )
         )
 
-    return updates
+    return {
+        "turn_count": state.get("turn_count", 0) + 1,
+    }

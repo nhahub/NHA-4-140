@@ -1,4 +1,3 @@
-import json
 import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
@@ -13,7 +12,6 @@ in our catalogue. You need to recommend alternative cars that are actually in st
 
 They wanted: {requested_description}
 What they searched for: brands={brands_searched}, model={model}, year={year}, body_type={body_type}
-Their preferences: {preferences_json}
 
 Available alternatives found:
 {alternatives_summary}
@@ -37,7 +35,6 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
     pool = config["configurable"].get("db_pool")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
-    prefs = state.get("preferences", {})
     catalogue = state.get("catalogue_check", {})
 
     brands_searched = catalogue.get("brands_searched", [])
@@ -60,9 +57,6 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
     search_text = " ".join(query_parts) if query_parts else last_message
     mcp_registry = config["configurable"].get("mcp_registry")
 
-    excluded_body_types = prefs.get("excluded_body_types", None)
-    excluded_brands = prefs.get("excluded_brands", None)
-    excluded_models = prefs.get("excluded_models", None)
     body_types = [body_type] if body_type else None
 
     # Search via MCP or direct
@@ -72,14 +66,9 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
             mcp_results = await mcp_registry.call_tool("search_cars", {
                 "query": search_text,
                 "limit": RECOMMENDATION_LIMIT + 3,
-                "budget_min": prefs.get("budget_min"),
-                "budget_max": prefs.get("budget_max"),
                 "body_types": body_types,
-                "excluded_body_types": excluded_body_types,
-                "excluded_brands": excluded_brands,
-                "excluded_models": excluded_models,
-                "year_min": prefs.get("year_min") or (year - 3 if year else None),
-                "year_max": prefs.get("year_max") or (year + 3 if year else None),
+                "year_min": year - 3 if year else None,
+                "year_max": year + 3 if year else None,
             })
             if isinstance(mcp_results, list):
                 results = mcp_results
@@ -92,14 +81,9 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
             query_text=search_text,
             vector=vector,
             limit=RECOMMENDATION_LIMIT + 3,
-            price_min=prefs.get("budget_min"),
-            price_max=prefs.get("budget_max"),
             body_types=body_types,
-            excluded_body_types=excluded_body_types,
-            excluded_brands=excluded_brands,
-            excluded_models=excluded_models,
-            year_min=prefs.get("year_min") or (year - 3 if year else None),
-            year_max=prefs.get("year_max") or (year + 3 if year else None),
+            year_min=year - 3 if year else None,
+            year_max=year + 3 if year else None,
         )
 
     # Build alternative ads list
@@ -170,7 +154,6 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
         if prices:
             parts.append(f"priced {min(prices):,.0f} – {max(prices):,.0f} EGP")
         alternatives_summary = " ".join(parts)
-    prefs_json = json.dumps(prefs, ensure_ascii=False, default=str)
     brands_str = ", ".join(brands_searched) if brands_searched else "unknown"
     model_str = model or "any"
 
@@ -182,7 +165,6 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
             model=model_str,
             year=year or "any",
             body_type=body_type or "any",
-            preferences_json=prefs_json,
             alternatives_summary=alternatives_summary,
         )),
         HumanMessage(content=last_message),
@@ -197,7 +179,7 @@ async def recommendation_node(state: CarsChatState, config: RunnableConfig) -> d
             streamed_text += content
 
     return {
-        "retrieved_ads": ads,
-        "recommendations": ads,
+        "retrieved_ads": ads[:2],
+        "recommendations": ads[:2],
         "node_response": streamed_text,
     }

@@ -70,14 +70,11 @@ async def seller_node(state: CarsChatState, config: RunnableConfig) -> dict:
     pool = config["configurable"].get("db_pool")
 
     last_message = state["messages"][-1].content if state.get("messages") else ""
-    prefs = state.get("preferences", {})
 
-    # Step 1: Extract seller car details
-    seller_fields = {k: prefs.get(k) for k in ("seller_car_brand", "seller_car_model", "seller_car_year",
-                                                  "seller_asking_price", "seller_intent") if prefs.get(k)}
+    # Step 1: Extract seller car details from the message
     extract_msgs = [
         SystemMessage(content=SELLER_EXTRACT_SYSTEM.format(
-            seller_fields_json=json.dumps(seller_fields, ensure_ascii=False, default=str),
+            seller_fields_json="{}",
             message=last_message,
         )),
         HumanMessage(content=last_message),
@@ -92,12 +89,12 @@ async def seller_node(state: CarsChatState, config: RunnableConfig) -> dict:
     except (json.JSONDecodeError, AttributeError):
         extracted = {}
 
-    brand = extracted.get("brand") or prefs.get("seller_car_brand") or ""
-    model = extracted.get("model") or prefs.get("seller_car_model") or ""
-    year = extracted.get("year") or prefs.get("seller_car_year")
+    brand = extracted.get("brand") or ""
+    model = extracted.get("model") or ""
+    year = extracted.get("year")
     condition = extracted.get("condition") or ""
     km_driven = extracted.get("km_driven")
-    seller_intent = extracted.get("seller_intent") or prefs.get("seller_intent") or "pricing"
+    seller_intent = extracted.get("seller_intent") or "pricing"
 
     # Step 2: Market price analysis (MCP or direct hybrid search)
     price_analysis = None
@@ -209,32 +206,7 @@ async def seller_node(state: CarsChatState, config: RunnableConfig) -> dict:
             content = chunk.content if hasattr(chunk, "content") else str(chunk)
             streamed_text += content
 
-    # Step 4: Refine seller preferences
-    merged = dict(prefs)
-    seller_updates = {
-        "seller_car_brand": brand or prefs.get("seller_car_brand"),
-        "seller_car_model": model or prefs.get("seller_car_model"),
-        "seller_car_year": year or prefs.get("seller_car_year"),
-        "seller_asking_price": extracted.get("seller_asking_price") or prefs.get("seller_asking_price"),
-        "seller_intent": seller_intent,
-        "is_seller": True,
-    }
-    for k, v in seller_updates.items():
-        if v is not None:
-            merged[k] = v
-
-    if pool:
-        import asyncio
-        from app.db.queries import upsert_user_preferences
-        prefs_for_db = dict(merged)
-        prefs_for_db["intent_history"] = state.get("intent_history", [])
-        prefs_for_db["turn_count"] = state.get("turn_count", 0)
-        asyncio.ensure_future(
-            upsert_user_preferences(pool, state["session_token"], state.get("user_id"), prefs_for_db)
-        )
-
     return {
         "node_response": streamed_text,
         "price_analysis": price_analysis,
-        "preferences": merged,
     }
