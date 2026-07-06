@@ -15,6 +15,7 @@ interface VoiceResult {
 export function useVoice() {
   const [state, setState] = useState<VoiceState>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
@@ -31,6 +32,7 @@ export function useVoice() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
+      setStream(stream)
 
       const mimeType = MediaRecorder.isTypeSupported('audio/webm')
         ? 'audio/webm'
@@ -69,6 +71,7 @@ export function useVoice() {
         if (stream) {
           stream.getTracks().forEach((t) => t.stop())
           streamRef.current = null
+          setStream(null)
         }
 
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType })
@@ -115,6 +118,7 @@ export function useVoice() {
     if (stream) {
       stream.getTracks().forEach((t) => t.stop())
       streamRef.current = null
+      setStream(null)
     }
 
     chunksRef.current = []
@@ -127,6 +131,7 @@ export function useVoice() {
     state,
     error,
     isSupported,
+    stream,
     startRecording,
     stopRecording,
     cancelRecording,
