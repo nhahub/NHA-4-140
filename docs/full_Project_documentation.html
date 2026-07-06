@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cars Marketplace — Multi-Agent Architecture</title>
+  <title>Cars Marketplace — Project Documentation</title>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <style>
     :root {
@@ -132,8 +132,8 @@
 <body>
 <div class="container">
 
-  <h1>Multi-Agent Architecture</h1>
-  <p class="subtitle">Cars Marketplace Egypt — LangGraph chatbot agent graph with tool calling, comparison analysis, and data flow</p>
+  <h1>Project Documentation</h1>
+  <p class="subtitle">Cars Marketplace Egypt — Complete system architecture: multi-agent chatbot, comparison analysis, monitoring, logging, caching, and deployment</p>
 
   <div class="legend">
     <span class="legend-item"><span class="dot" style="background:var(--primary)"></span> Node</span>
@@ -143,6 +143,8 @@
     <span class="legend-item"><span class="dot" style="background:var(--accent)"></span> LLM Call</span>
     <span class="legend-item"><span class="dot" style="background:var(--amber)"></span> Tool / DB call</span>
     <span class="legend-item"><span class="dot" style="background:var(--green)"></span> Web Search</span>
+    <span class="legend-item"><span class="dot" style="background:#ef4444"></span> Monitoring / Logging</span>
+    <span class="legend-item"><span class="dot" style="background:#f97316"></span> Cache (Redis)</span>
   </div>
 
   <!-- ================================================================ -->
@@ -152,14 +154,20 @@
   <p>
     The system consists of <strong>three microservices</strong> running behind an Nginx reverse proxy,
     plus a Next.js frontend. Each service is a separate FastAPI application with its own database pool,
-    vector search client, and LLM configuration.
+    vector search client, and LLM configuration. A comprehensive <strong>monitoring stack</strong>
+    (Prometheus + Grafana + Loki) provides observability, and <strong>Redis</strong> provides distributed
+    caching for expensive computations.
   </p>
 
   <div class="arch-callout">
     <strong>Chatbot Service</strong> (:8001) — LangGraph-powered multi-agent chat with MultiLLM routing, hybrid search, semantic caching, guardrails, client disconnect detection, and MCP (Model Context Protocol) tool abstraction layer.<br>
-    <strong>Comparison Analysis</strong> (:8002) — Standalone car comparison pipeline.<br>
-    <strong>Backend API</strong> (:8000) — REST API for ads, auth, images, and search.<br>
-    <strong>Frontend</strong> (:3000) — Next.js app with chat, compare, and listing pages.
+    <strong>Comparison Analysis</strong> (:8002) — Standalone car comparison pipeline with Tavily web research and dual-LLM fallback.<br>
+    <strong>Backend API</strong> (:8000) — REST API for ads, auth, images, search, and analytics.<br>
+    <strong>Frontend</strong> (:3000) — Next.js app with chat, compare, and listing pages.<br>
+    <strong>Redis</strong> (:6379) — Distributed cache for API responses, comparison reports, and LLM results.<br>
+    <strong>Prometheus</strong> (:9090) — Metrics collection from all Python services at <code>/metrics</code>.<br>
+    <strong>Grafana</strong> (:3001) — Dashboards for metrics (Prometheus) and logs (Loki).<br>
+    <strong>Loki</strong> (:3100) — Log aggregation with Promtail collecting container stdout.
   </div>
 
   <div class="diagram-wrapper">
@@ -172,6 +180,7 @@
 
         BE --> PG[(PostgreSQL Supabase)]
         BE --> QDR[(Qdrant Cloud)]
+        BE --> REDIS[(Redis :6379)]
 
         CB --> PG
         CB --> QDR
@@ -183,12 +192,29 @@
         CA --> GROQ
         CA --> OR
         CA --> TAV[Tavily API]
+        CA --> REDIS
+
+        PROM[Prometheus :9090] -.->|scrape /metrics| BE
+        PROM -.->|scrape /metrics| CB
+        PROM -.->|scrape /metrics| CA
+        PROM -.->|query| GRAF[Grafana :3001]
+
+        PROMT[Promtail] -.->|collect stdout| BE
+        PROMT -.->|collect stdout| CB
+        PROMT -.->|collect stdout| CA
+        PROMT -.->|push logs| LOKI[Loki :3100]
+        LOKI -.->|query| GRAF
 
         style Nginx fill:#1a1d27,stroke:#3b82f6,color:#e4e6f0
         style FE fill:#3b82f6,color:#fff,stroke:none
         style BE fill:#059669,color:#fff,stroke:none
         style CB fill:#8b5cf6,color:#fff,stroke:none
         style CA fill:#d97706,color:#fff,stroke:none
+        style REDIS fill:#f97316,color:#fff,stroke:none
+        style PROM fill:#ef4444,color:#fff,stroke:none
+        style PROMT fill:#ef4444,color:#fff,stroke:none
+        style GRAF fill:#ef4444,color:#fff,stroke:none
+        style LOKI fill:#ef4444,color:#fff,stroke:none
     </pre>
   </div>
 
@@ -905,12 +931,73 @@
   <!-- ================================================================ -->
   <h2>6. Caching, Memory &amp; Persistence</h2>
   <p>
-    Conversation memory uses <strong>PostgreSQL</strong> for long-term persistence and
+    The system uses a <strong>tiered caching strategy</strong>: in-memory caches for hot data
+    within the chatbot process, and <strong>Redis</strong> as a distributed cache shared across
+    all services. Conversation memory uses <strong>PostgreSQL</strong> for long-term persistence and
     <strong>MemorySaver</strong> (in-memory) for LangGraph checkpoints during active sessions.
     A lightweight <strong>SemanticCache</strong> (in-memory LRU) reduces redundant LLM and embedding calls.
+    <strong>Redis</strong> caches expensive API responses and comparison reports.
   </p>
 
-  <h3>Caching Layer</h3>
+  <h3>Redis Cache (Distributed)</h3>
+  <p>
+    Redis runs as a Docker container (<code>cars_redis</code>) on port 6379 and is accessible
+    by all services on the <code>cars_net</code> Docker network. Configuration via
+    <code>REDIS_URL=redis://redis:6379/0</code> in <code>.env</code>.
+    The Backend config already defines <code>redis_url: str | None = None</code> at
+    <code>Backend/app/config.py:34</code>, and the Comparison Analysis config has
+    <code>redis_url: str = "redis://redis:6379/0"</code>.
+  </p>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Cache Key</th>
+        <th>TTL</th>
+        <th>Stores</th>
+        <th>Invalidated On</th>
+        <th>Service</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>cache:brand-counts</code></td>
+        <td>5 min</td>
+        <td><code>{"brands": [{brand, count, logo_url}]}</code></td>
+        <td>Ad create / update / delete</td>
+        <td>Backend</td>
+      </tr>
+      <tr>
+        <td><code>cache:analytics-stats</code></td>
+        <td>5 min</td>
+        <td><code>{"total_ads", "total_cities", ...}</code></td>
+        <td>TTL expiry</td>
+        <td>Backend</td>
+      </tr>
+      <tr>
+        <td><code>cache:site-assets</code></td>
+        <td>1 hour</td>
+        <td><code>{"logo_url", "wallpaper_url"}</code></td>
+        <td>TTL expiry</td>
+        <td>Backend</td>
+      </tr>
+      <tr>
+        <td><code>cache:compare-ai:{ad_id_1}:{ad_id_2}</code></td>
+        <td>30 min</td>
+        <td>Comparison SSE events (JSON array)</td>
+        <td>TTL expiry</td>
+        <td>Backend</td>
+      </tr>
+      <tr>
+        <td><code>compare:{md5(ad_ids)}:{language}</code></td>
+        <td>1 hour</td>
+        <td>Full <code>ComparisonReport</code> JSON</td>
+        <td>TTL expiry</td>
+        <td>Comparison Analysis</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>In-Memory Caches</h3>
   <table class="tool-matrix">
     <thead>
       <tr>
@@ -935,6 +1022,13 @@
         <td>30min</td>
         <td><code>SHA256(prompt_text)</code></td>
         <td>Router, topic detection, search decision — deterministic LLM calls</td>
+      </tr>
+      <tr>
+        <td><strong>Session Memory</strong></td>
+        <td>N/A (per session)</td>
+        <td>24h</td>
+        <td><code>session_token</code></td>
+        <td><code>SessionMemory</code> — in-memory session state with max 20 turns per session</td>
       </tr>
     </tbody>
   </table>
@@ -1352,15 +1446,15 @@
       </tr>
       <tr>
         <td><strong>2. RESEARCH</strong></td>
-        <td><code>runner.py</code></td>
-        <td>For each car, runs a concurrent Tavily web search for <code>"{brand} {model} {year} car review reliability problems"</code>. Returns title + URL + content snippets per car.</td>
+        <td><code>tavily.py</code></td>
+        <td>For each car, runs <strong>3 concurrent Tavily web searches</strong> (reliability, pricing, reputation). Each search returns an AI-generated <code>tavily_answer</code> summary plus 3 source snippets with URLs. Results are injected into the LLM prompt in stage 3.</td>
         <td class="no">None (web search only)</td>
       </tr>
       <tr>
         <td><strong>3. ANALYZE</strong></td>
         <td><code>analyzer.py</code></td>
-        <td>Per-car deep analysis via LLM. Extracts structured JSON: pros/cons, scores (value, reliability, running cost, resale, overall), market context, reliability summary, best_for persona, red flags, spare parts availability, service center coverage. Uses <code>_clean_json()</code> with retry on parse failure.</td>
-        <td class="yes">1–2× per car (OpenRouter → Groq fallback)</td>
+        <td>Per-car deep analysis via LLM. The <strong>primary</strong> call (OpenRouter) is <strong>multimodal</strong> — it receives both the ad data + Tavily research as text, and the <strong>car's cover image</strong> as an image URL. The <strong>fallback</strong> (Groq) is text-only. Extracts structured JSON: pros/cons, scores (value, reliability, running cost, resale, overall), market context, reliability summary, best_for persona, red flags, spare parts availability, service center coverage, and a <code>photo_analysis</code> field derived from the cover image. Uses <code>_clean_json()</code> with retry on parse failure.</td>
+        <td class="yes">1–2× per car (OpenRouter multimodal → Groq text fallback)</td>
       </tr>
       <tr>
         <td><strong>4. COMPARE</strong></td>
@@ -1452,20 +1546,282 @@
     </tbody>
   </table>
 
+  <h3>Tavily Web Research in Detail</h3>
+  <p>
+    The <code>TavilyWrapper.research_car(ad)</code> method in <code>app/core/tavily.py</code>
+    performs <strong>3 parallel web searches per car</strong>, each configured with
+    <code>search_depth="basic"</code>, <code>max_results=3</code>, and
+    <code>include_answer=True</code> (Tavily returns an AI-generated summary alongside raw results):
+  </p>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Search Query</th>
+        <th>Result Field</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>"{brand} {model} {year} reliability common problems Egypt"</code></td>
+        <td><code>reliability_research</code></td>
+        <td>Find known mechanical issues, common problems, reliability ratings, and recalls specific to the Egyptian market.</td>
+      </tr>
+      <tr>
+        <td><code>"{brand} {model} {year} price Egypt market 2024 2025"</code></td>
+        <td><code>price_research</code></td>
+        <td>Find current market pricing, resale value trends, and price ranges in Egypt.</td>
+      </tr>
+      <tr>
+        <td><code>"{brand} {model} owner review Egypt مصر"</code></td>
+        <td><code>reputation_research</code></td>
+        <td>Find real owner reviews, ownership experiences, and word-of-mouth reputation. The Arabic keyword <code>مصر</code> ensures Egypt-specific results.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    Each Tavily result contains a <code>tavily_answer</code> (LLM-generated summary) and
+    <code>sources[]</code> (up to 3 articles with title, URL, and content snippet).
+    These results are then <strong>injected verbatim into the LLM prompt</strong> in the
+    ANALYZE stage, giving the AI current, real-world context beyond what the ad listing provides.
+    The <code>research_sources</code> in the final report are deduplicated URLs across all
+    3 research categories per car.
+  </p>
+
+  <h3>Car Image Analysis in the ANALYZE Stage</h3>
+  <p>
+    The Comparison Analysis service analyzes <strong>one image per car</strong> — the cover image
+    (<code>cover_image_url</code>, which is the ad image with <code>order_index = 0</code>).
+    This is fetched from PostgreSQL via the <code>LEFT JOIN ad_images</code> query in
+    <code>fetch_ads_for_comparison()</code>.
+  </p>
+
+  <h4>How the image is used</h4>
+  <p>
+    In <code>analyzer.py</code>, the <code>_parse_llm_json()</code> function calls
+    <code>_build_multimodal_content(human_text, cover_image_url)</code> which constructs
+    the message as a list of content blocks:
+  </p>
+  <pre><code>[
+  {"type": "text", "text": "Analyze this car: BMW 320i 2020..."},
+  {"type": "image_url", "image_url": {"url": "https://...cover.jpg"}},
+]</code></pre>
+  <p>
+    This multimodal message is sent to <strong>OpenRouter</strong> with the model
+    <code>google/gemini-2.0-flash-exp:free</code> (which supports vision). The prompt
+    instructs the LLM to produce a <code>photo_analysis</code> field:
+  </p>
+  <blockquote style="border-left:3px solid var(--primary);padding:0.5rem 1rem;margin:0.5rem 0;color:var(--text-muted);">
+    "2-3 sentences analyzing the car photos: exterior condition, visible damage
+    (scratches, dents, rust), tire wear, cleanliness, any visual red flags.
+    Base this on the image provided above."
+  </blockquote>
+  <p>
+    If the OpenRouter (multimodal) call <strong>fails</strong>, the pipeline falls back to
+    <strong>Groq</strong>, which does NOT support vision — so the fallback analysis is
+    text-only with no image available.
+  </p>
+
+  <h3>Backend Comparison — Vision Analysis (separate service)</h3>
+  <p>
+    The <strong>Backend API</strong> also has a comparison endpoint at
+    <code>POST /api/v1/compare-ai</code> (powered by <code>ComparisonService</code> in
+    <code>Backend/app/services/comparison/</code>). Unlike the standalone microservice,
+    this endpoint:
+  </p>
+  <ul>
+    <li>Compares exactly <strong>2 ads</strong> (no 3-ad mode)</li>
+    <li>Runs <strong>no Tavily web research</strong> — pure data-driven analysis</li>
+    <li>Uses a <strong>dedicated vision analyzer</strong> that collects <strong>up to 5 images</strong>
+    per car (cover + all additional images)</li>
+    <li>Has a <strong>hallucination guard</strong> that validates claims against source data</li>
+  </ul>
+
+  <h4>Vision analysis flow (Backend)</h4>
+  <p>
+    The <code>vision_analyzer.py</code> collects all available images (cover first, then
+    up to 4 additional from <code>ad_images</code>) and sends them to OpenRouter
+    (<code>google/gemini-2.0-flash-exp:free</code>) with a structured inspection prompt
+    that examines <strong>5 areas</strong>:
+  </p>
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Area</th>
+        <th>What the LLM Examines</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Exterior</strong></td>
+        <td>Paint condition, scratches, dents, rust, panel gaps, accident indicators</td>
+      </tr>
+      <tr>
+        <td><strong>Wheels &amp; Tires</strong></td>
+        <td>Condition, curb rash, tire tread depth</td>
+      </tr>
+      <tr>
+        <td><strong>Lights</strong></td>
+        <td>Headlights, tail lights for cracks or fogging</td>
+      </tr>
+      <tr>
+        <td><strong>Interior</strong></td>
+        <td>Seat condition, dashboard wear, steering wheel wear, cleanliness</td>
+      </tr>
+      <tr>
+        <td><strong>Glass</strong></td>
+        <td>Windshield cracks or chips</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    The vision analyzer returns structured findings per area with <code>severity</code>
+    (good/fair/poor) and <code>confidence</code> (high/medium/low), plus an
+    <code>overall_condition</code>, <code>accident_indicators</code> (yes/no/unknown),
+    and a computed <code>confidence</code> score (0.0–1.0). The vision confidence is
+    then <strong>multiplied</strong> with the structured analysis confidence to produce
+    the final per-car confidence score:
+  </p>
+  <pre><code>combined_confidence = structured.confidence × vision.confidence</code></pre>
+  <p>
+    This confidence is used by the <strong>hallucination guard</strong> to prevent the
+    comparison from making claims that exceed what the data supports (e.g., asserting
+    accident history when the vision analyzer found no indicator).
+  </p>
+
   <h3>LLM Configuration</h3>
   <p>
     The Comparison Analysis uses its own LLM stack, separate from the Chatbot:
   </p>
   <ul>
-    <li><strong>Primary:</strong> <code>OpenRouterChat</code> — custom <code>BaseChatModel</code> subclass with 120s timeout, 3-attempt retry with exponential backoff, model <code>nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free</code>.</li>
-    <li><strong>Fallback:</strong> <code>ChatGroq</code> — model <code>openai/gpt-oss-120b</code>, key from <code>groq_api_key</code>.</li>
-    <li><strong>Web search:</strong> <code>TavilyWrapper</code> — 5 results per car, used only for research stage.</li>
+    <li><strong>Primary:</strong> <code>OpenRouterChat</code> — custom <code>BaseChatModel</code> subclass with 120s timeout, 3-attempt retry with exponential backoff, model <code>google/gemini-2.0-flash-exp:free</code> (supports vision).</li>
+    <li><strong>Fallback:</strong> <code>ChatGroq</code> — model <code>openai/gpt-oss-120b</code>, key from <code>groq_api_key</code> (text-only, no vision).</li>
+    <li><strong>Web search:</strong> <code>TavilyWrapper</code> — <code>search_depth="basic"</code>, 3 results per query, 3 queries per car.</li>
   </ul>
 
   <!-- ================================================================ -->
-  <!-- SECTION 11: VOICE ASSISTANT                                     -->
+  <!-- SECTION 11: MONITORING & LOGGING                                 -->
   <!-- ================================================================ -->
-  <h2>11. Voice Assistant</h2>
+  <h2>11. Monitoring &amp; Logging (Prometheus + Grafana + Loki)</h2>
+  <p>
+    A full observability stack runs alongside the application services, providing
+    <strong>metrics</strong> (request rates, latencies, error rates), <strong>logs</strong>
+    (container stdout/stderr), and <strong>dashboards</strong> that correlate both.
+  </p>
+
+  <div class="diagram-wrapper">
+    <pre class="mermaid">
+      flowchart LR
+        BE[Backend :8000] -->|"/metrics"| PROM
+        CB[Chatbot :8001] -->|"/metrics"| PROM
+        CA[Comparison :8002] -->|"/metrics"| PROM
+
+        PROM[Prometheus :9090] -->|datasource| GRAF[Grafana :3001]
+        LOKI[Loki :3100] -->|datasource| GRAF
+
+        PROMT[Promtail] -->|"docker.sock → collect stdout"| BE
+        PROMT -->|"docker.sock → collect stdout"| CB
+        PROMT -->|"docker.sock → collect stdout"| CA
+        PROMT -->|push logs| LOKI
+
+        style BE fill:#059669,color:#fff,stroke:none
+        style CB fill:#8b5cf6,color:#fff,stroke:none
+        style CA fill:#d97706,color:#fff,stroke:none
+        style PROM fill:#ef4444,color:#fff,stroke:none
+        style PROMT fill:#ef4444,color:#fff,stroke:none
+        style GRAF fill:#ef4444,color:#fff,stroke:none
+        style LOKI fill:#ef4444,color:#fff,stroke:none
+    </pre>
+  </div>
+
+  <h3>Metrics (Prometheus)</h3>
+  <p>
+    Each Python service is instrumented with <code>prometheus-fastapi-instrumentator</code>
+    which automatically exposes a <code>/metrics</code> endpoint. Prometheus scrapes all three
+    every <strong>15 seconds</strong>.
+  </p>
+
+  <table class="tool-matrix">
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Metrics URL</th>
+        <th>Key Metrics</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Backend</td>
+        <td><code>http://localhost:8000/metrics</code></td>
+        <td><code>http_requests_total</code>, <code>http_request_duration_seconds</code> (histogram), <code>http_requests_in_progress</code></td>
+      </tr>
+      <tr>
+        <td>Chatbot</td>
+        <td><code>http://localhost:8001/metrics</code></td>
+        <td>Same — per-service request rates, latencies, error counts</td>
+      </tr>
+      <tr>
+        <td>Comparison</td>
+        <td><code>http://localhost:8002/metrics</code></td>
+        <td>Same — plus pipeline stage timing via custom metrics (future)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Logs (Loki + Promtail)</h3>
+  <p>
+    <strong>Promtail</strong> runs as a Docker container with access to the Docker socket
+    (<code>/var/run/docker.sock</code>). It auto-discovers all running containers and tails
+    their stdout/stderr, labelling each log line with <code>container</code>, <code>service</code>
+    (Docker Compose service name), and <code>stream</code> (stdout / stderr). Logs are shipped
+    to <strong>Loki</strong> for storage and indexing.
+  </p>
+
+  <h4>Querying Logs in Grafana</h4>
+  <p>
+    Open Grafana at <strong>http://localhost:3001</strong> → <strong>Explore</strong> →
+    select <strong>Loki</strong> datasource. Example queries:
+  </p>
+  <ul>
+    <li><code>{container="cars_backend"}</code> — all Backend logs</li>
+    <li><code>{container="cars_chatbot", stream="stderr"}</code> — Chatbot errors only</li>
+    <li><code>{service="backend"} |= "error"</code> — Backend logs containing "error"</li>
+    <li><code>{container=~"cars_.*"} |= "exception"</code> — exceptions across all services</li>
+  </ul>
+
+  <h3>Grafana Dashboards</h3>
+  <p>
+    Grafana comes pre-provisioned with auto-connected <strong>Prometheus</strong> and
+    <strong>Loki</strong> datasources, plus a <strong>FastAPI Service Overview</strong>
+    dashboard showing:
+  </p>
+  <ul>
+    <li><strong>Requests per second</strong> — rate of <code>http_requests_total</code></li>
+    <li><strong>Request duration (p50, p95, p99)</strong> — histogram quantiles</li>
+    <li><strong>HTTP error rate</strong> — percentage of 5xx responses</li>
+  </ul>
+  <p>
+    Additional dashboards can be added via the Grafana UI. Dashboard provisioning configs
+    are in <code>infra/grafana/provisioning/</code>.
+  </p>
+
+  <h3>Instrumentation Code</h3>
+  <p>
+    Each service uses the same pattern (example from <code>Backend/app/main.py</code>):
+  </p>
+  <pre><code>from prometheus_fastapi_instrumentator import Instrumentator
+
+# After app creation:
+Instrumentator().instrument(app).expose(app)</code></pre>
+  <p>
+    This automatically tracks request count, duration histogram, and in-progress requests
+    for every route, including exception handlers.
+  </p>
+
+  <!-- ================================================================ -->
+  <!-- SECTION 12: VOICE ASSISTANT                                     -->
+  <!-- ================================================================ -->
+  <h2>12. Voice Assistant</h2>
   <p>
     The chatbot includes a voice I/O subsystem within the Chatbot microservice (:8001), enabling
     speech-to-text (STT) and text-to-speech (TTS) capabilities. Voice endpoints are proxied through
@@ -1565,9 +1921,9 @@
   </ol>
 
   <!-- ================================================================ -->
-  <!-- SECTION 12: LANGSMITH TRACING                                   -->
+  <!-- SECTION 13: LANGSMITH TRACING                                   -->
   <!-- ================================================================ -->
-  <h2>12. LangSmith Tracing</h2>
+  <h2>13. LangSmith Tracing</h2>
   <p>
     All LLM calls across both services are traced to <strong>LangSmith</strong> for observability.
     Environment variables are loaded at service startup via <code>python-dotenv</code>
@@ -1636,9 +1992,9 @@
     └── client disconnect check → cancel if dropped</code></pre>
 
   <!-- ================================================================ -->
-  <!-- SECTION 13: DEPLOYMENT                                          -->
+  <!-- SECTION 14: DEPLOYMENT                                          -->
   <!-- ================================================================ -->
-  <h2>13. Deployment</h2>
+  <h2>14. Deployment</h2>
   <p>All services run in Docker containers orchestrated by <code>docker-compose.yml</code> with an Nginx reverse proxy.</p>
 
   <h3>Service Map</h3>
@@ -1648,6 +2004,7 @@
         <th>Service</th>
         <th>Container</th>
         <th>Internal Port</th>
+        <th>Exposed Port</th>
         <th>Nginx Route</th>
       </tr>
     </thead>
@@ -1656,11 +2013,13 @@
         <td>Frontend (Next.js)</td>
         <td><code>frontend</code></td>
         <td>:3000</td>
+        <td>:3000</td>
         <td><code>/</code></td>
       </tr>
       <tr>
         <td>Backend API</td>
         <td><code>backend</code></td>
+        <td>:8000</td>
         <td>:8000</td>
         <td><code>/api/</code></td>
       </tr>
@@ -1668,17 +2027,55 @@
         <td>Chatbot</td>
         <td><code>chatbot</code></td>
         <td>:8001</td>
+        <td>:8001</td>
         <td><code>/api/v1/chat/</code></td>
       </tr>
       <tr>
         <td>Comparison Analysis</td>
         <td><code>comparison</code></td>
         <td>:8002</td>
+        <td>:8002</td>
         <td><code>/api/v1/compare</code></td>
+      </tr>
+      <tr>
+        <td>Redis</td>
+        <td><code>cars_redis</code></td>
+        <td>:6379</td>
+        <td>:6379</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Prometheus</td>
+        <td><code>cars_prometheus</code></td>
+        <td>:9090</td>
+        <td>:9090</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Loki</td>
+        <td><code>cars_loki</code></td>
+        <td>:3100</td>
+        <td>:3100</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Grafana</td>
+        <td><code>cars_grafana</code></td>
+        <td>:3000</td>
+        <td>:3001</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Promtail</td>
+        <td><code>cars_promtail</code></td>
+        <td>:9080</td>
+        <td>—</td>
+        <td>—</td>
       </tr>
       <tr>
         <td>Reverse Proxy</td>
         <td><code>nginx</code></td>
+        <td>:80</td>
         <td>:80</td>
         <td>—</td>
       </tr>
@@ -1694,9 +2091,9 @@ location /               { proxy_pass http://frontend; }    # :3000</code></pre>
   </div>
 
   <!-- ================================================================ -->
-  <!-- SECTION 14: FRONTEND ARCHITECTURE                               -->
+  <!-- SECTION 15: FRONTEND ARCHITECTURE                               -->
   <!-- ================================================================ -->
-  <h2>14. Frontend Architecture</h2>
+  <h2>15. Frontend Architecture</h2>
   <p>Next.js app with App Router, Zustand for state, Framer Motion for animations.</p>
 
   <h3>Key Components</h3>
@@ -1778,7 +2175,7 @@ location /               { proxy_pass http://frontend; }    # :3000</code></pre>
   <!-- ================================================================ -->
   <hr style="border-color:var(--border);margin:3rem 0 1rem;">
   <p style="text-align:center;font-size:0.8rem;">
-    Cars Marketplace Egypt — DEPI Final Project 2026 &bull; Multi-Agent Architecture Document
+    Cars Marketplace Egypt — DEPI Final Project 2026 &bull; Project Documentation
   </p>
 
 </div>
