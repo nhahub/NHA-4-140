@@ -1,3 +1,4 @@
+import json
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from app.enums import NodeName, TaskType
@@ -81,10 +82,29 @@ async def router_node(state: CarsChatState, config: RunnableConfig) -> dict:
             HumanMessage(content=last_message),
         ])
 
-    node_name = response.content.strip().lower() if response.content else NodeName.GENERAL
+    raw = (response.content or "").strip()
 
-    valid_nodes = {NodeName.CATALOGUE, NodeName.ADVISOR, NodeName.SELLER, NodeName.GUIDE, NodeName.GENERAL}
-    if node_name not in valid_nodes:
+    # Try parsing as JSON (some LLMs return {"next_node": "catalogue_node"})
+    node_name = None
+    if raw.startswith("{"):
+        try:
+            parsed = json.loads(raw)
+            candidate = parsed.get("next_node", "")
+            if isinstance(candidate, str):
+                node_name = candidate.strip().lower()
+        except json.JSONDecodeError:
+            pass
+
+    # Fallback: search for a valid node name anywhere in the response
+    if not node_name:
+        raw_lower = raw.lower()
+        valid_nodes = {NodeName.CATALOGUE, NodeName.ADVISOR, NodeName.SELLER, NodeName.GUIDE, NodeName.GENERAL}
+        for n in valid_nodes:
+            if n.value in raw_lower:
+                node_name = n.value
+                break
+
+    if not node_name:
         node_name = NodeName.GENERAL
 
     intent_history = state.get("intent_history", []) + [node_name]

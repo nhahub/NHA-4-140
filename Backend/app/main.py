@@ -115,6 +115,12 @@ async def lifespan(app: FastAPI):
                     updated_at TIMESTAMPTZ DEFAULT NOW()
                 )
             """)
+            await conn.execute("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS inferred_body_types TEXT[]")
+            await conn.execute("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS inferred_min_seats INTEGER")
+            await conn.execute("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS inferred_use_case VARCHAR(64)")
+            await conn.execute("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS excluded_body_types TEXT[]")
+            await conn.execute("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS excluded_brands TEXT[]")
+            await conn.execute("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS excluded_models TEXT[]")
             logger.info("Ensured user_preferences table exists")
     except Exception as e:
         logger.warning("Failed to ensure database schema: %s", e)

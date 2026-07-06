@@ -37,18 +37,18 @@ STRICT RULE — JSON field conventions:
    - body types, brands, models
 
 Return ONLY JSON — no explanation, no markdown:
-{
+{{
   "has_preference_content": true/false,
   "inferred_use_case": "family" | "travel" | "large_vehicle" | "budget" | "luxury" | "offroad" | null,
   "inferred_from_text": ["family", "travel"],
   "inferred_body_types": ["suv", "mpv"],
   "inferred_min_seats": null,
-  "explicit_rejections": {
+  "explicit_rejections": {{
     "body_types": ["sedan"],
     "brands": [],
     "models": []
-  }
-}
+  }}
+}}
 
 User message: "{message}"
 Existing preferences: {preferences_json}"""

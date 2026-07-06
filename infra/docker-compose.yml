@@ -1,6 +1,5 @@
 name: infra-cars
 
-version: "3.9"
 
 networks:
   cars_net:
@@ -11,7 +10,7 @@ services:
   # ── BACKEND — FastAPI ──────────────────────────────────────────
   backend:
     build:
-      context: ../backend
+      context: ../Backend
       dockerfile: Dockerfile
     container_name: cars_backend
     restart: unless-stopped
@@ -24,9 +23,12 @@ services:
     networks:
       - cars_net
     volumes:
-      - ../backend:/app
+      - ../Backend:/app
       - /app/__pycache__
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      redis:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -37,7 +39,7 @@ services:
   # ── CHATBOT — LangGraph + Groq ────────────────────────────────
   chatbot:
     build:
-      context: ../chatbot
+      context: ../Chatbot
       dockerfile: Dockerfile
     container_name: cars_chatbot
     restart: unless-stopped
@@ -51,7 +53,7 @@ services:
     networks:
       - cars_net
     volumes:
-      - ../chatbot:/app
+      - ../Chatbot:/app
       - /app/__pycache__
     command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     healthcheck:
@@ -84,20 +86,22 @@ services:
       - ../Comparison_Analysis:/app
       - /app/__pycache__
     command: uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
+    depends_on:
+      redis:
+        condition: service_started
+      backend:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
-    depends_on:
-      backend:
-        condition: service_healthy
 
   # ── FRONTEND — Next.js ─────────────────────────────────────────
   frontend:
     build:
-      context: ../frontend
+      context: ../Frontend
       dockerfile: Dockerfile
     container_name: cars_frontend
     restart: unless-stopped
@@ -111,7 +115,7 @@ services:
     networks:
       - cars_net
     volumes:
-      - ../frontend:/app
+      - ../Frontend:/app
       - /app/node_modules
       - /app/.next
     depends_on:

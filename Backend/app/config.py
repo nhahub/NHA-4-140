@@ -20,8 +20,9 @@ class Settings(BaseSettings):
     gemini_api_key: str
     tavily_api_key: str
     groq_api_key: str = ""
- 
- 
+    groq_model: str = "llama-3.3-70b-versatile"
+
+
     openrouter_api_key: str = ""
     openrouter_vision_model: str = "google/gemini-2.0-flash-exp:free"
 
@@ -31,7 +32,7 @@ class Settings(BaseSettings):
 
     comparison_service_url: str = "http://comparison:8002"
 
-    redis_url: str | None = None
+    redis_url: str = "redis://redis:6379/0"
 
     chatbot_url: str = "http://chatbot:8001"
 
