@@ -6,7 +6,7 @@ def extract_unique_sources(research: dict) -> list[dict]:
     seen_urls = set()
     sources = []
     for key in ("reliability_research", "price_research", "reputation_research"):
-        for s in research.get(key, {}).get("sources", []):
+        for s in research.get(key, {}).get("results", []):
             url = s.get("url", "")
             if url and url not in seen_urls:
                 seen_urls.add(url)

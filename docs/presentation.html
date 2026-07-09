@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,17 +10,17 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --accent: #06b6d4;
-    --bg: #0f172a;
-    --bg-card: #1e293b;
-    --text: #f1f5f9;
-    --text-muted: #94a3b8;
-    --border: #334155;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
+    --primary: #3b5bdb;
+    --primary-dark: #3451c7;
+    --accent: #0891b2;
+    --bg: #f8f9fc;
+    --bg-card: #ffffff;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --border: #e8ecf4;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
   }
 
   body {
@@ -50,7 +50,7 @@
     background: var(--bg-card);
     border-radius: 24px;
     border: 1px solid var(--border);
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 20px 40px -12px rgba(0,0,0,0.1);
     display: none;
     position: relative;
   }
@@ -66,7 +66,7 @@
     position: fixed; bottom: 0; left: 0; right: 0;
     display: flex; align-items: center; justify-content: center; gap: 16px;
     padding: 16px 24px;
-    background: rgba(15,23,42,0.95);
+    background: rgba(255,255,255,0.85);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
     z-index: 100;
@@ -90,7 +90,7 @@
   h1 { font-size: 42px; font-weight: 800; margin-bottom: 8px; }
   h2 { font-size: 28px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
   h2 .badge { font-size: 13px; font-weight: 600; background: var(--primary); color: white; padding: 2px 12px; border-radius: 20px; flex-shrink: 0; }
-  h3 { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: var(--accent); }
+  h3 { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: var(--primary); }
   p { font-size: 16px; line-height: 1.7; color: var(--text-muted); margin-bottom: 14px; }
 
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -102,32 +102,34 @@
     background: var(--bg); border-radius: 14px; padding: 18px 20px;
     border: 1px solid var(--border); transition: all 0.2s;
   }
-  .card:hover { border-color: var(--primary); }
+  .card:hover { border-color: #c7d7fe; }
   .card .icon { font-size: 28px; margin-bottom: 8px; display: block; }
   .card h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
   .card p { font-size: 13px; color: var(--text-muted); margin: 0; }
 
   .tag {
-    display: inline-block; padding: 2px 10px; border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 6px;
     font-size: 12px; font-weight: 600; margin: 2px;
   }
-  .tag-blue { background: rgba(37,99,235,0.2); color: #60a5fa; }
-  .tag-cyan { background: rgba(6,182,212,0.2); color: #67e8f9; }
-  .tag-green { background: rgba(34,197,94,0.2); color: #86efac; }
-  .tag-yellow { background: rgba(245,158,11,0.2); color: #fcd34d; }
-  .tag-red { background: rgba(239,68,68,0.2); color: #fca5a5; }
-  .tag-purple { background: rgba(168,85,247,0.2); color: #c084fc; }
-  .tag-orange { background: rgba(249,115,22,0.2); color: #fb923c; }
+  .tag img { height: 14px; width: 14px; flex-shrink: 0; }
+  .tag-blue { background: #eef2ff; color: #3b5bdb; }
+  .tag-cyan { background: #ecfeff; color: #0891b2; }
+  .tag-green { background: #f0fdf4; color: #16a34a; }
+  .tag-yellow { background: #fffbeb; color: #d97706; }
+  .tag-red { background: #fef2f2; color: #dc2626; }
+  .tag-purple { background: #faf5ff; color: #9333ea; }
+  .tag-orange { background: #fff7ed; color: #ea580c; }
 
   .spec-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .spec-table th { text-align: left; color: var(--text-muted); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
   .spec-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
 
   .tech-badge {
-    display: inline-block; background: rgba(37,99,235,0.1);
-    border: 1px solid rgba(37,99,235,0.3); border-radius: 8px;
-    padding: 4px 12px; font-size: 12px; font-weight: 500; margin: 2px;
+    display: inline-flex; align-items: center; gap: 4px; background: #eef2ff;
+    border: 1px solid #c7d7fe; border-radius: 8px;
+    padding: 4px 12px; font-size: 12px; font-weight: 500; margin: 2px; color: #3b5bdb;
   }
+  .tech-badge img { height: 14px; width: 14px; flex-shrink: 0; }
 
   /* === DIAGRAM COMPONENTS === */
   .d-container { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 0; }
@@ -141,7 +143,7 @@
   .d-arrow::after { content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--text-muted); }
   .d-arrow-right { display: inline-flex; align-items: center; gap: 0; color: var(--text-muted); }
   .d-arrow-right::after { content: '→'; font-size: 16px; margin: 0 6px; }
-  .box-blue { background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.4); color: #93c5fd; }
+  .box-blue { background: #eef2ff; border-color: #c7d7fe; color: #3b5bdb; }
   .d-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; width: 100%; }
   .d-col { display: flex; flex-direction: column; align-items: center; }
   .d-branch { display: flex; gap: 8px; justify-content: center; width: 100%; }
@@ -150,19 +152,21 @@
   .d-join::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--text-muted); }
   .d-join::after { content: ''; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 2px; height: 16px; background: var(--text-muted); }
 
-  .box-primary { background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.4); color: #93c5fd; }
-  .box-accent { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.4); color: #67e8f9; }
-  .box-success { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); color: #86efac; }
-  .box-warning { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: #fcd34d; }
-  .box-danger { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
-  .box-purple { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #c084fc; }
-  .box-gray { background: rgba(148,163,184,0.1); border-color: rgba(148,163,184,0.3); color: #cbd5e1; }
+  .box-primary { background: #eef2ff; border-color: #c7d7fe; color: #3b5bdb; }
+  .box-accent { background: #ecfeff; border-color: #a5f3fc; color: #0891b2; }
+  .box-success { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; }
+  .box-warning { background: #fffbeb; border-color: #fde68a; color: #d97706; }
+  .box-danger { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+  .box-purple { background: #faf5ff; border-color: #e9d5ff; color: #9333ea; }
+  .box-yellow { background: #fffbeb; border-color: #fde68a; color: #d97706; }
+  .box-cyan { background: #ecfeff; border-color: #a5f3fc; color: #0891b2; }
+  .box-gray { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
 
   .d-label { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 2px; }
   .d-sub { font-size: 10px; opacity: 0.7; display: block; margin-top: 2px; }
 
-  .d-section { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: rgba(15,23,42,0.5); width: 100%; }
-  .d-section-title { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 8px; text-align: center; letter-spacing: 1px; text-transform: uppercase; }
+  .d-section { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: #fafbfc; width: 100%; }
+  .d-section-title { font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-align: center; letter-spacing: 1px; text-transform: uppercase; }
 
   @media (max-width: 768px) {
     .slide { padding: 28px 24px; max-height: 80vh; }
@@ -180,16 +184,16 @@
 <!-- ====== SLIDE 0: TITLE ====== -->
 <div class="slide active" data-index="0">
   <div style="text-align:center; padding: 40px 0;">
-    <div style="font-size:72px; margin-bottom:16px;">🚗</div>
-    <h1 style="font-size:52px; margin-bottom:8px;">Deals</h1>
+    <img src="logo.png" alt="Deals Logo" style="height:80px; margin-bottom:16px;" onerror="this.style.display='none';document.getElementById('title-fallback').style.display='block'">
+    <h1 id="title-fallback" style="font-size:52px; margin-bottom:8px; color:var(--primary); display:none;">Deals</h1>
     <div style="font-size:24px; color:var(--accent); font-weight:600; margin-bottom:16px;">AI-Powered Car Marketplace for Egypt</div>
     <p style="font-size:18px; max-width:600px; margin:0 auto 32px;">Smart car buying & selling with artificial intelligence</p>
     <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-      <span class="tag tag-blue">Next.js 16</span>
-      <span class="tag tag-cyan">FastAPI</span>
-      <span class="tag tag-green">LangGraph</span>
-      <span class="tag tag-purple">Qdrant</span>
-      <span class="tag tag-yellow">Docker</span>
+      <span class="tag tag-blue"><img src="logos/nextdotjs.svg" alt="">Next.js 16</span>
+      <span class="tag tag-cyan"><img src="logos/fastapi.svg" alt="">FastAPI</span>
+      <span class="tag tag-green"><img src="logos/langchain.svg" alt="">LangGraph</span>
+      <span class="tag tag-purple"><img src="logos/qdrant.svg" alt="">Qdrant</span>
+      <span class="tag tag-yellow"><img src="logos/docker.svg" alt="">Docker</span>
     </div>
     <div style="margin-top:40px; color:var(--text-muted); font-size:14px;">Deals — Full-Stack AI Car Marketplace</div>
   </div>
@@ -215,12 +219,12 @@
     <div class="card" style="border-left:3px solid var(--primary);">
       <h4 style="color:var(--primary);">🧠 AI Chat Assistant</h4>
       <p>10-node LangGraph conversational agent — searches, advises, compares, guides</p>
-      <div><span class="tag tag-blue">LangGraph</span> <span class="tag tag-cyan">Groq</span></div>
+      <div><span class="tag tag-blue"><img src="logos/langchain.svg" alt="">LangGraph</span> <span class="tag tag-cyan">Groq</span></div>
     </div>
     <div class="card" style="border-left:3px solid var(--accent);">
       <h4 style="color:var(--accent);">🔎 Semantic Search</h4>
       <p>Hybrid vector + BM25 search on Qdrant with field filters and quality evaluation</p>
-      <div><span class="tag tag-cyan">Qdrant</span> <span class="tag tag-green">all-MiniLM-L6-v2</span></div>
+      <div><span class="tag tag-cyan"><img src="logos/qdrant.svg" alt="">Qdrant</span> <span class="tag tag-green">all-MiniLM-L6-v2</span></div>
     </div>
     <div class="card" style="border-left:3px solid var(--success);">
       <h4 style="color:var(--success);">⚖️ AI Comparison</h4>
@@ -235,12 +239,12 @@
     <div class="card" style="border-left:3px solid #a855f7;">
       <h4 style="color:#a855f7;">📊 Price Analysis</h4>
       <p>AI-powered market price estimation from DuckDuckGo + Tavily research</p>
-      <div><span class="tag tag-purple">DuckDuckGo</span> <span class="tag tag-blue">Tavily</span></div>
+      <div><span class="tag tag-purple"><img src="logos/duckduckgo.svg" alt="">DuckDuckGo</span> <span class="tag tag-blue">Tavily</span></div>
     </div>
     <div class="card" style="border-left:3px solid #f97316;">
       <h4 style="color:#f97316;">📈 Observability</h4>
       <p>Prometheus + Grafana + Loki — full metrics, dashboards, and log aggregation</p>
-      <div><span class="tag tag-orange">Grafana</span> <span class="tag tag-blue">Prometheus</span></div>
+      <div><span class="tag tag-orange"><img src="logos/grafana.svg" alt="">Grafana</span> <span class="tag tag-blue"><img src="logos/prometheus.svg" alt="">Prometheus</span></div>
     </div>
   </div>
 </div>
@@ -281,19 +285,19 @@
     <div class="d-section" style="margin-top:8px;">
       <div class="d-section-title">External Services</div>
       <div class="d-row">
-        <span class="tag tag-blue">Supabase PG</span>
-        <span class="tag tag-cyan">Qdrant Cloud</span>
+        <span class="tag tag-blue"><img src="logos/supabase.svg" alt="">Supabase PG</span>
+        <span class="tag tag-cyan"><img src="logos/qdrant.svg" alt="">Qdrant Cloud</span>
         <span class="tag tag-green">Groq API</span>
         <span class="tag tag-yellow">OpenRouter</span>
-        <span class="tag tag-purple">Redis</span>
+        <span class="tag tag-purple"><img src="logos/redis.svg" alt="">Redis</span>
       </div>
     </div>
     <div class="d-section">
       <div class="d-section-title">Monitoring Stack</div>
       <div class="d-row">
-        <span class="tag tag-blue">Prometheus :9090</span>
-        <span class="tag tag-orange">Grafana :3001</span>
-        <span class="tag tag-green">Loki :3100</span>
+        <span class="tag tag-blue"><img src="logos/prometheus.svg" alt="">Prometheus :9090</span>
+        <span class="tag tag-orange"><img src="logos/grafana.svg" alt="">Grafana :3001</span>
+        <span class="tag tag-green"><img src="logos/loki.svg" alt="">Loki :3100</span>
       </div>
     </div>
   </div>
@@ -308,14 +312,14 @@
       <h3>Core Tables</h3>
       <table class="spec-table">
         <tr><th>Table</th><th>Purpose</th></tr>
-        <tr><td><code>ads</code></td><td>Car listings + <code>qdrant_synced</code> flag</td></tr>
-        <tr><td><code>users</code></td><td>User accounts (bcrypt hashed)</td></tr>
-        <tr><td><code>ad_images</code></td><td>Multi-image refs (up to 10)</td></tr>
-        <tr><td><code>favorites</code></td><td>User bookmarks</td></tr>
-        <tr><td><code>chat_messages</code></td><td>History + <code>node_used</code></td></tr>
-        <tr><td><code>chat_sessions</code></td><td>Session + context state</td></tr>
-        <tr><td><code>user_preferences</code></td><td>Car preferences, intents</td></tr>
-        <tr><td><code>ad_views</code></td><td>View tracking</td></tr>
+        <tr><td>ads</td><td>Car listings + qdrant_synced flag</td></tr>
+        <tr><td>users</td><td>User accounts (bcrypt hashed)</td></tr>
+        <tr><td>ad_images</td><td>Multi-image refs (up to 10)</td></tr>
+        <tr><td>favorites</td><td>User bookmarks</td></tr>
+        <tr><td>chat_messages</td><td>History + node_used</td></tr>
+        <tr><td>chat_sessions</td><td>Session + context state</td></tr>
+        <tr><td>user_preferences</td><td>Car preferences, intents</td></tr>
+        <tr><td>ad_views</td><td>View tracking</td></tr>
       </table>
     </div>
     <div>
@@ -323,7 +327,7 @@
       <div class="card">
         <p><strong>Driver:</strong> asyncpg (async pools)</p>
         <p><strong>Auth:</strong> JWT (python-jose) + bcrypt</p>
-        <p><strong>Storage:</strong> logos, wallpapers, ad images</p>
+        <p><strong>Storage:</strong> <img src="logos/supabase.svg" alt="" style="height:14px;vertical-align:middle;"> logos, wallpapers, ad images</p>
         <p><strong>Formats:</strong> JPEG/WebP/PNG, ≤5MB</p>
       </div>
     </div>
@@ -333,19 +337,19 @@
 <!-- ===== SLIDE 6: DOCKER ====== -->
 <div class="slide" data-index="5">
   <h2><span class="badge">05</span> Docker & Containerization</h2>
-  <p>9 services on <code>cars_net</code> bridge network with health checks and live code reload.</p>
+  <p>9 services on cars_net bridge network with health checks and live code reload.</p>
   <div class="grid-3" style="margin-top:16px;">
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>backend</h4><p>FastAPI :8000</p><span class="tag tag-blue">python:3.11-slim</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>chatbot</h4><p>LangGraph :8001</p><span class="tag tag-cyan">python:3.11-slim</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>comparison</h4><p>FastAPI :8002</p><span class="tag tag-green">python:3.11-slim</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>frontend</h4><p>Next.js 16 :3000</p><span class="tag tag-yellow">node:20-alpine</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>nginx</h4><p>Reverse proxy :80</p><span class="tag tag-red">nginx:alpine</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>redis</h4><p>Cache :6379</p><span class="tag tag-purple">redis:alpine</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>prometheus</h4><p>Metrics :9090</p><span class="tag tag-blue">prom/prometheus</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>grafana</h4><p>Dashboards :3001</p><span class="tag tag-orange">grafana/grafana</span></div>
-    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>loki</h4><p>Logs :3100</p><span class="tag tag-green">grafana/loki</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>backend</h4><p>FastAPI :8000</p><span class="tag tag-blue"><img src="logos/python.svg" alt="">python:3.11-slim</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>chatbot</h4><p>LangGraph :8001</p><span class="tag tag-cyan"><img src="logos/python.svg" alt="">python:3.11-slim</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>comparison</h4><p>FastAPI :8002</p><span class="tag tag-green"><img src="logos/python.svg" alt="">python:3.11-slim</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>frontend</h4><p>Next.js 16 :3000</p><span class="tag tag-yellow"><img src="logos/nextdotjs.svg" alt="">node:20-alpine</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>nginx</h4><p>Reverse proxy :80</p><span class="tag tag-red"><img src="logos/nginx.svg" alt="">nginx:alpine</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>redis</h4><p>Cache :6379</p><span class="tag tag-purple"><img src="logos/redis.svg" alt="">redis:alpine</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>prometheus</h4><p>Metrics :9090</p><span class="tag tag-blue"><img src="logos/prometheus.svg" alt="">prom/prometheus</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>grafana</h4><p>Dashboards :3001</p><span class="tag tag-orange"><img src="logos/grafana.svg" alt="">grafana/grafana</span></div>
+    <div class="card"><span style="font-size:24px;display:block;">🧩</span><h4>loki</h4><p>Logs :3100</p><span class="tag tag-green"><img src="logos/loki.svg" alt="">grafana/loki</span></div>
   </div>
-  <div style="margin-top:12px;"><span class="tech-badge">Makefile</span><span class="tech-badge">Health checks</span><span class="tech-badge">Live mounts</span><span class="tech-badge">BuildKit</span></div>
+  <div style="margin-top:12px;"><span class="tech-badge"><img src="logos/docker.svg" alt="">Makefile</span><span class="tech-badge">Health checks</span><span class="tech-badge">Live mounts</span><span class="tech-badge">BuildKit</span></div>
 </div>
 
 <!-- ===== SLIDE 7: NGINX ====== -->
@@ -353,10 +357,10 @@
   <h2><span class="badge">06</span> Nginx Reverse Proxy</h2>
   <table class="spec-table" style="margin-top:16px;">
     <tr><th>Location</th><th>Target</th><th>Timeout</th><th>Special</th></tr>
-    <tr><td><code>/api/v1/chat/</code></td><td>backend:8000</td><td>3600s</td><td>Buffering OFF, WebSocket</td></tr>
-    <tr><td><code>/api/v1/compare</code></td><td>backend:8000</td><td>600s</td><td>Buffering OFF, SSE</td></tr>
-    <tr><td><code>/api/</code></td><td>backend:8000</td><td>120s</td><td>Buffering OFF</td></tr>
-    <tr><td><code>/</code></td><td>frontend:3000</td><td>60s</td><td>WebSocket HMR</td></tr>
+    <tr><td>/api/v1/chat/</td><td>backend:8000</td><td>3600s</td><td>Buffering OFF, WebSocket</td></tr>
+    <tr><td>/api/v1/compare</td><td>backend:8000</td><td>600s</td><td>Buffering OFF, SSE</td></tr>
+    <tr><td>/api/</td><td>backend:8000</td><td>120s</td><td>Buffering OFF</td></tr>
+    <tr><td>/</td><td>frontend:3000</td><td>60s</td><td>WebSocket HMR</td></tr>
   </table>
   <div class="card" style="margin-top:16px;">
     <p><strong>Global:</strong> auto workers, 1024 connections, gzip on, client_max_body_size 20M</p>
@@ -378,8 +382,8 @@
     </div>
     <div>
       <h3>Embedding Text</h3>
-      <div class="card"><code>brand + model + year + body_type + fuel_type + transmission + condition + city + cc_range + description + special_conditions</code></div>
-      <div class="card" style="margin-top:8px;"><span class="tag tag-blue">Backend</span> <span class="tag tag-cyan">Chatbot</span> both load at startup</div>
+      <div class="card">brand + model + year + body_type + fuel_type + transmission + condition + city + cc_range + description + special_conditions</div>
+      <div class="card" style="margin-top:8px;"><span class="tag tag-blue"><img src="logos/python.svg" alt="">Backend</span> <span class="tag tag-cyan"><img src="logos/langchain.svg" alt="">Chatbot</span> both load at startup</div>
     </div>
   </div>
 </div>
@@ -389,7 +393,7 @@
   <h2><span class="badge">08</span> Qdrant Vector Database</h2>
   <div class="grid-2" style="margin-top:16px;">
     <div>
-      <h3>Collection: <code>cars_ads</code></h3>
+      <h3>Collection: cars_ads</h3>
       <table class="spec-table">
         <tr><th>Property</th><th>Value</th></tr>
         <tr><td>Vectors</td><td>384-dim, Cosine</td></tr>
@@ -404,21 +408,21 @@
     <div>
       <h3>Point Payload</h3>
       <div class="card" style="font-size:13px;line-height:1.8;">
-        <code>ad_id</code>, <code>brand</code>, <code>model</code>, <code>year</code>, <code>price</code>,<br>
-        <code>condition</code>, <code>km_driven</code>, <code>fuel_type</code>,<br>
-        <code>transmission</code>, <code>body_type</code>, <code>city</code>,<br>
-        <code>cc_range</code>, <code>is_active</code>, <code>cover_image_url</code>, <code>created_at</code>
+        ad_id, brand, model, year, price,<br>
+        condition, km_driven, fuel_type,<br>
+        transmission, body_type, city,<br>
+        cc_range, is_active, cover_image_url, created_at
       </div>
       <div style="margin-top:8px;">
         <span class="tag tag-green">BM25 text index</span>
-        <span class="tag tag-cyan">Hybrid search</span>
+        <span class="tag tag-cyan"><img src="logos/qdrant.svg" alt="">Hybrid search</span>
         <span class="tag tag-yellow">RRF fusion</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== SLIDE 10: RAG PIPELINE ====== -->
+<!-- ===== SLIDE 09: RAG PIPELINE ====== -->
 <div class="slide" data-index="9">
   <h2><span class="badge">09</span> RAG Pipeline — Hybrid Search</h2>
   <div class="d-container">
@@ -430,8 +434,8 @@
     <div class="d-arrow"></div>
     <div class="d-box box-warning d-box-lg">3. Hybrid Search — RRF Fusion</div>
     <div class="d-branch">
-      <div class="d-branch-item"><div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;background:rgba(37,99,235,0.15);border-color:rgba(37,99,235,0.4);color:#93c5fd;">BM25 Full-text<span class="d-sub">text named vector</span></div></div>
-      <div class="d-branch-item"><div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.4);color:#67e8f9;">Vector Cosine<span class="d-sub">default named vector</span></div></div>
+        <div class="d-branch-item"><div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">BM25 Full-text<span class="d-sub">text named vector</span></div></div>
+        <div class="d-branch-item"><div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">Vector Cosine<span class="d-sub">default named vector</span></div></div>
     </div>
     <div class="d-join" style="margin:2px 0;"></div>
     <div class="d-arrow"></div>
@@ -443,9 +447,58 @@
   </div>
 </div>
 
-<!-- ===== SLIDE 11: INDEXING PIPELINE ====== -->
+<!-- ===== SLIDE 10: WHY HYBRID SEARCH ====== -->
 <div class="slide" data-index="10">
-  <h2><span class="badge">10</span> Indexing Pipeline</h2>
+  <h2><span class="badge">10</span> Why Hybrid Search (BM25 + Vector)?</h2>
+  <div class="d-section" style="margin-bottom:6px;">
+    <div class="d-section-title">🔍 The Problem: Each approach has blind spots</div>
+    <div class="d-row" style="gap:10px;">
+      <div class="card" style="flex:1;padding:14px;border-left:3px solid var(--warning);">
+        <h4 style="color:var(--warning);">📄 BM25 Full-Text Only</h4>
+        <p style="font-size:11px;"><strong>Good at:</strong> Exact keyword matching, rare/technical terms like "BMW 520i 2022"</p>
+        <p style="font-size:11px;"><strong>Misses:</strong> Synonyms, paraphrases, semantic meaning — "sedan" won't match "executive saloon"</p>
+        <p style="font-size:11px;"><strong>Score:</strong> Keyword overlap only, no understanding of intent</p>
+      </div>
+      <div class="card" style="flex:1;padding:14px;border-left:3px solid var(--accent);">
+        <h4 style="color:var(--accent);">🧠 Vector Embedding Only</h4>
+        <p style="font-size:11px;"><strong>Good at:</strong> Semantic matching, synonyms, conceptual similarity — "family car" matches "7-seater SUV"</p>
+        <p style="font-size:11px;"><strong>Misses:</strong> Exact/tail terms — "BMW 520i 2022" might rank a similar Mercedes higher</p>
+        <p style="font-size:11px;"><strong>Score:</strong> Cosine similarity, can drift on rare terms</p>
+      </div>
+    </div>
+  </div>
+  <div class="d-section" style="margin-bottom:0;">
+    <div class="d-section-title">✅ Hybrid (BM25 + Vector + RRF) — Best of Both</div>
+    <div class="d-container">
+      <div class="d-box box-success d-box" style="padding:10px 14px;font-size:12px;">Query → BM25 score + Vector similarity → RRF fusion → Final ranked results</div>
+      <div class="d-row" style="gap:8px;margin-top:6px;">
+        <div class="card" style="flex:1;padding:10px;text-align:center;font-size:11px;">
+          <span style="font-size:22px;">🎯</span><br>
+          Exact matches<br><span style="color:var(--success);">boosted by BM25</span>
+        </div>
+        <div class="card" style="flex:1;padding:10px;text-align:center;font-size:11px;">
+          <span style="font-size:22px;">🌊</span><br>
+          Semantic matches<br><span style="color:var(--accent);">caught by vectors</span>
+        </div>
+        <div class="card" style="flex:1;padding:10px;text-align:center;font-size:11px;">
+          <span style="font-size:22px;">🔀</span><br>
+          RRF merges both<br><span style="color:var(--primary);">no tuning needed</span>
+        </div>
+        <div class="card" style="flex:1;padding:10px;text-align:center;font-size:11px;border-color:var(--success);">
+          <span style="font-size:22px;">📈</span><br>
+          Higher recall<br><span style="color:var(--success);">without precision loss</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:8px;padding:10px;text-align:center;background:var(--bg);">
+      <p style="font-size:12px;margin:0;">🧪 Real-world example: Searching "luxury German sedan" via BM25 misses "Mercedes E-Class" listings that don't contain those keywords — but vector search catches the semantic match</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SLIDE 11: INDEXING PIPELINE ====== -->
+<div class="slide" data-index="11">
+  <h2><span class="badge">11</span> Indexing Pipeline</h2>
   <div class="grid-2" style="margin-top:16px;">
     <div>
       <h3>Ad Create / Update</h3>
@@ -472,7 +525,7 @@
       </div>
       <div class="card" style="margin-top:12px;">
         <h4>Sync Integrity</h4>
-        <p><code>qdrant_synced</code> column enables audit of index state</p>
+        <p>qdrant_synced column enables audit of index state</p>
       </div>
     </div>
   </div>
@@ -483,192 +536,146 @@
   </div>
 </div>
 
-<!-- ===== SLIDE 12: DFD ====== -->
-<div class="slide" data-index="11">
-  <h2><span class="badge">11</span> DFD — Project Data Flow</h2>
-  <div class="d-container">
-    <div class="d-box box-gray d-box-lg" style="margin-bottom:4px;">👤 User</div>
-    <div class="d-branch" style="gap:8px;">
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;width:100%;">Browse Ads</div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;width:100%;">Search Cars</div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;width:100%;">Chat Assistant</div>
-      </div>
-    </div>
-    <div class="d-join" style="margin:2px 0;"></div>
-    <div class="d-box box-yellow d-box-lg" style="padding:10px 16px;font-size:12px;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:#fcd34d;margin:4px 0;">🌐 Nginx Reverse Proxy</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-blue d-box-lg" style="padding:10px 16px;font-size:12px;">⚡ Backend Gateway :8000</div>
-    <div class="d-branch" style="gap:12px;margin:4px 0;">
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-success d-box-sm" style="padding:8px 12px;font-size:11px;width:100%;">Chatbot :8001</div>
-        <div class="d-arrow" style="height:10px;"></div>
-        <div class="d-box box-cyan d-box-sm" style="padding:6px 10px;font-size:10px;background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.4);color:#67e8f9;width:100%;">Qdrant Vector DB</div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-purple d-box-sm" style="padding:8px 12px;font-size:11px;width:100%;">Comparison :8002</div>
-        <div class="d-arrow" style="height:10px;"></div>
-        <div class="d-box box-yellow d-box-sm" style="padding:6px 10px;font-size:10px;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:#fcd34d;width:100%;">Tavily + OpenRouter</div>
-      </div>
-    </div>
-    <div class="d-join" style="margin:2px 0;"></div>
-    <div class="d-branch" style="gap:12px;">
-      <div class="d-branch-item"><span class="tag tag-blue">Supabase PG</span></div>
-      <div class="d-branch-item"><span class="tag tag-purple">Redis Cache</span></div>
-      <div class="d-branch-item"><span class="tag tag-green">Groq / OpenRouter</span></div>
-      <div class="d-branch-item"><span class="tag tag-yellow">Tavily / DDG</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== SLIDE 13: DATA FLOW — USER → DB → EMBED → QDRANT ====== -->
+<!-- ===== SLIDE 12: DATA FLOW ====== -->
 <div class="slide" data-index="12">
-  <h2><span class="badge">12</span> Data Flow: User → PG → Embedding → Qdrant</h2>
-  <div class="d-section">
-    <div class="d-section-title">✏️ Write Path — Ad Creation</div>
-    <div class="d-container">
-      <div class="d-box box-gray d-box-sm" style="padding:8px 14px;">User submits ad form</div>
-      <div class="d-arrow" style="height:10px;"></div>
-      <div class="d-box box-blue d-box-sm" style="padding:8px 14px;">POST /api/v1/ads → Nginx → Backend</div>
-      <div class="d-arrow" style="height:10px;"></div>
-      <div class="d-branch">
-        <div class="d-branch-item">
-          <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">Save to PostgreSQL<span class="d-sub">ads table + storage</span></div>
-        </div>
-        <div class="d-branch-item">
-          <div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;">Background: Index to Qdrant</div>
-        </div>
+  <h2><span class="badge">12</span> System Data Flow</h2>
+  <div class="d-container" style="gap:4px;">
+    <div class="d-section" style="margin-bottom:4px;">
+      <div class="d-section-title">👤 External Entities</div>
+      <div class="d-row">
+        <div class="d-box box-gray d-box-sm" style="padding:8px 16px;font-size:12px;">Car Buyers & Sellers</div>
+        <div class="d-box box-gray d-box-sm" style="padding:8px 16px;font-size:12px;">Web Search APIs</div>
+        <div class="d-box box-gray d-box-sm" style="padding:8px 16px;font-size:12px;">LLM Providers</div>
       </div>
-      <div class="d-join" style="margin:2px 0;"></div>
-      <div class="d-row" style="font-size:11px;color:var(--text-muted);gap:16px;margin:4px 0;">
-        <span>a. Build embedding text: <code>"BMW 520 2022 sedan ..."</code></span>
-      </div>
-      <div class="d-row" style="font-size:11px;color:var(--text-muted);gap:16px;">
-        <span>b. <span style="color:var(--success);">Embed → all-MiniLM-L6-v2</span> → 384-dim vector</span>
-      </div>
-      <div class="d-row" style="font-size:11px;color:var(--text-muted);gap:16px;">
-        <span>c. Build payload (15 metadata fields)</span>
-        <span>d. Upsert to Qdrant</span>
-      </div>
-      <div class="d-arrow" style="height:8px;"></div>
-      <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">Set qdrant_synced = true</div>
     </div>
-  </div>
-  <div class="d-section">
-    <div class="d-section-title">📖 Read Path — Search</div>
-    <div class="d-container">
-      <div class="d-box box-blue d-box-sm" style="padding:8px 14px;">User types: "cheap reliable sedan Cairo under 500k"</div>
-      <div class="d-arrow" style="height:10px;"></div>
-      <div class="d-box box-accent d-box-sm" style="padding:8px 14px;">GET /api/v1/search?q=...&price_max=500000&city=Cairo</div>
-      <div class="d-arrow" style="height:10px;"></div>
+    <div class="d-arrow" style="height:10px;"></div>
+    <div class="d-section" style="margin-bottom:4px;">
+      <div class="d-section-title">🧠 AI Processes (Core System)</div>
       <div class="d-branch" style="gap:8px;">
-        <div class="d-branch-item"><div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;">1. Embed query → 384-dim</div></div>
-        <div class="d-branch-item"><div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">2. Build filter (city+price)</div></div>
+        <div class="d-branch-item">
+          <div class="d-box box-primary d-box" style="padding:10px 8px;font-size:11px;width:100%;">💬 AI Chat Assistant<span class="d-sub">Conversational search & advice</span></div>
+        </div>
+        <div class="d-branch-item">
+          <div class="d-box box-accent d-box" style="padding:10px 8px;font-size:11px;width:100%;">🔎 Semantic Car Search<span class="d-sub">Hybrid BM25 + vector</span></div>
+        </div>
+        <div class="d-branch-item">
+          <div class="d-box box-purple d-box" style="padding:10px 8px;font-size:11px;width:100%;">⚖️ AI Comparison Engine<span class="d-sub">Web-researched analysis</span></div>
+        </div>
       </div>
-      <div class="d-join" style="margin:2px 0;"></div>
-      <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;">3. Hybrid search: BM25 + Vector → RRF fusion</div>
-      <div class="d-arrow" style="height:8px;"></div>
-      <div class="d-box box-purple d-box-sm" style="padding:6px 12px;font-size:11px;">4. Quality eval → 5. Enrich from PG → Return to user</div>
+      <div class="d-branch" style="gap:8px;margin-top:4px;">
+        <div class="d-branch-item">
+          <div class="d-box box-warning d-box" style="padding:10px 8px;font-size:11px;width:100%;">📊 Price Analysis<span class="d-sub">Market price estimation</span></div>
+        </div>
+        <div class="d-branch-item">
+          <div class="d-box box-yellow d-box" style="padding:10px 8px;font-size:11px;width:100%;">🗣️ Voice Assistant<span class="d-sub">STT / TTS in Ar & En</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="d-arrow" style="height:10px;"></div>
+    <div class="d-section" style="margin-bottom:4px;">
+      <div class="d-section-title">💾 Data Stores</div>
+      <div class="d-row">
+        <div class="d-box box-success d-box-sm" style="padding:8px 16px;font-size:12px;">PostgreSQL<span class="d-sub">User accounts, ads, sessions</span></div>
+        <div class="d-box box-cyan d-box-sm" style="padding:8px 16px;font-size:12px;">Qdrant Vector DB<span class="d-sub">384-dim car embeddings</span></div>
+        <div class="d-box box-purple d-box-sm" style="padding:8px 16px;font-size:12px;"><img src="logos/redis.svg" alt="" style="height:12px;vertical-align:middle;"> Redis Cache<span class="d-sub">Comparisons, prices, embeddings</span></div>
+      </div>
+    </div>
+    <div class="d-section" style="margin-top:4px;">
+      <div class="d-section-title">📋 Data Flows Summary</div>
+      <div class="d-row" style="font-size:11px;color:var(--text-muted);gap:8px;flex-wrap:wrap;">
+        <span>← User queries & preferences →</span>
+        <span>← Car listings & embeddings →</span>
+        <span>← Web research results →</span>
+        <span>← LLM-generated analysis →</span>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ===== SLIDE 14: MULTI-AGENT ARCHITECTURE ====== -->
 <div class="slide" data-index="13">
-  <h2><span class="badge">13</span> Multi-Agent Architecture — Complete Graph</h2>
-  <p>LangGraph <code>StateGraph</code> with 10 specialist nodes, conditional edges, and <code>MemorySaver</code> checkpointer.</p>
-  <div class="d-container" style="margin-top:8px;">
-    <div class="d-box box-gray d-box-sm" style="padding:8px;font-size:12px;max-width:300px;">💬 User Message</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-blue d-box-lg" style="padding:12px 16px;font-size:12px;">PREFERENCE_EXTRACTOR<span class="d-sub">2-pass NLP: need inference + explicit extraction → DB</span></div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-accent d-box-lg" style="padding:12px 16px;font-size:12px;">ROUTER<span class="d-sub">LLM classifies intent: 1 of 5 categories</span></div>
-    <div class="d-join"></div>
-    <div class="d-branch" style="gap:6px;">
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-warning d-box-sm" style="padding:6px 10px;font-size:11px;">Catalogue<span class="d-sub">Check availability</span></div>
-        <div class="d-branch" style="gap:4px;">
-          <div class="d-branch-item"><div class="d-box box-success d-box-sm" style="padding:4px 8px;font-size:10px;">Found → Search</div></div>
-          <div class="d-branch-item"><div class="d-box box-danger d-box-sm" style="padding:4px 8px;font-size:10px;">Missing→Recommend</div></div>
+  <h2><span class="badge">13</span> AI Multi-Agent Chat Assistant</h2>
+  <div class="d-container" style="gap:2px;">
+    <div class="d-section" style="margin-bottom:4px;">
+      <div class="d-section-title">🧠 How It Works — 10-Node LangGraph State Machine</div>
+      <div class="d-container">
+        <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;max-width:200px;">💬 User sends a message</div>
+        <div class="d-arrow" style="height:8px;"></div>
+        <div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">🔍 Preference Extractor<span class="d-sub">Extracts car preferences from natural language</span></div>
+        <div class="d-arrow" style="height:8px;"></div>
+        <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">🔄 Router<span class="d-sub">Classifies intent → routes to the right specialist</span></div>
+        <div class="d-join" style="height:16px;"></div>
+        <div class="d-row" style="gap:6px;">
+          <div class="d-box box-warning d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">📋 Catalogue<br><span class="d-sub">Check car availability</span></div>
+          <div class="d-box box-success d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">🔎 Search<br><span class="d-sub">Find matching cars</span></div>
+          <div class="d-box box-danger d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">💡 Recommend<br><span class="d-sub">Suggest alternatives</span></div>
+          <div class="d-box box-purple d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">🤝 Advisor<br><span class="d-sub">Evaluate & compare cars</span></div>
+          <div class="d-box box-yellow d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">💰 Seller<br><span class="d-sub">Pricing tips & analysis</span></div>
         </div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-purple d-box-sm" style="padding:6px 10px;font-size:11px;">Advisor<span class="d-sub">Car evaluation</span></div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-yellow d-box-sm" style="padding:6px 10px;font-size:11px;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:#fcd34d;">Seller<span class="d-sub">Pricing + tips</span></div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-blue d-box-sm" style="padding:6px 10px;font-size:11px;">Guide<span class="d-sub">How-to topics</span></div>
-      </div>
-      <div class="d-branch-item">
-        <div class="d-arrow"></div>
-        <div class="d-box box-gray d-box-sm" style="padding:6px 10px;font-size:11px;">General<span class="d-sub">Car Q&A</span></div>
+        <div class="d-row" style="gap:6px;margin-top:2px;">
+          <div class="d-box box-blue d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">📖 Guide<br><span class="d-sub">How-to buying guides</span></div>
+          <div class="d-box box-gray d-box-sm" style="padding:8px 10px;font-size:10px;flex:1;">💬 General<br><span class="d-sub">General car Q&A</span></div>
+        </div>
+        <div class="d-join" style="height:14px;"></div>
+        <div class="d-box box-success d-box-lg" style="padding:8px 14px;font-size:11px;">✅ RESPONDER<span class="d-sub">Streams response via SSE: status → tokens → car results → price analysis → done</span></div>
+        <div class="d-arrow" style="height:6px;"></div>
+        <div class="d-box box-gray d-box-sm" style="padding:4px 10px;font-size:10px;">📤 Formatted response to user</div>
       </div>
     </div>
-    <div class="d-join"></div>
-    <div class="d-box box-success d-box-lg" style="padding:12px 16px;font-size:12px;">RESPONDER (Terminal)<span class="d-sub">SSE events: status → token → cars → price_analysis → done | Persist to DB</span></div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;">END</div>
+    <div class="d-section" style="margin-bottom:0;">
+      <div class="d-section-title">🛠️ Tools Each Agent Uses</div>
+      <div class="d-row" style="gap:6px;flex-wrap:wrap;">
+        <span class="tag tag-blue" style="font-size:10px;">🔎 search_cars</span>
+        <span class="tag tag-purple" style="font-size:10px;">🔍 find_similar_cars</span>
+        <span class="tag tag-green" style="font-size:10px;">📋 check_catalogue</span>
+        <span class="tag tag-yellow" style="font-size:10px;">💰 analyze_market_price</span>
+        <span class="tag tag-cyan" style="font-size:10px;">🌐 web_search</span>
+        <span class="tag tag-red" style="font-size:10px;">🖼️ get_car_images</span>
+        <span class="tag tag-orange" style="font-size:10px;">📖 get_website_guide</span>
+        <span class="tag tag-blue" style="font-size:10px;">🏷️ expand_brand_origins</span>
+        <span class="tag tag-purple" style="font-size:10px;">🗣️ expand_colloquial_terms</span>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- ===== SLIDE 15: STATE + TECH STACK ====== -->
 <div class="slide" data-index="14">
-  <h2><span class="badge">14</span> State Machine: CarsChatState & Node Details</h2>
-  <div class="grid-2" style="margin-top:16px;">
-    <div>
-      <h3>State (14 fields)</h3>
-      <table class="spec-table">
-        <tr><th>Field</th><th>Writer</th></tr>
-        <tr><td><code>messages</code></td><td>responder</td></tr>
-        <tr><td><code>intent</code></td><td>router</td></tr>
-        <tr><td><code>next_node</code></td><td>router, catalogue</td></tr>
-        <tr><td><code>session_token</code></td><td>external</td></tr>
-        <tr><td><code>user_id</code></td><td>external</td></tr>
-        <tr><td><code>context_ad_id</code></td><td>external</td></tr>
-        <tr><td><code>retrieved_ads</code></td><td>search, recommend</td></tr>
-        <tr><td><code>similar_ads</code></td><td>advisor</td></tr>
-        <tr><td><code>price_analysis</code></td><td>seller</td></tr>
-        <tr><td><code>node_response</code></td><td>all specialists</td></tr>
-        <tr><td><code>catalogue_check</code></td><td>catalogue</td></tr>
-        <tr><td><code>recommendations</code></td><td>recommendation</td></tr>
-        <tr><td><code>turn_count</code></td><td>pref. extractor</td></tr>
-        <tr><td><code>intent_history</code></td><td>router</td></tr>
-      </table>
+  <h2><span class="badge">14</span> How the Chatbot Processes Your Query</h2>
+  <div class="d-section" style="margin-bottom:6px;">
+    <div class="d-section-title">🔄 Example: User asks "Find me a reliable sedan under 500k EGP in Cairo"</div>
+    <div class="d-container">
+      <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;max-width:250px;">💬 User Query</div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">1️⃣ Preference Extractor<span class="d-sub">Extracts: sedan, budget 500k, Cairo → saved to user profile</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">2️⃣ Router<span class="d-sub">Detects intent: "search_cars" → routes to Search specialist</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;">3️⃣ Search Agent<span class="d-sub">Calls MCP tool: search_cars(sedan, max_price=500000, city=Cairo)</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-purple d-box-sm" style="padding:6px 12px;font-size:11px;">4️⃣ Qdrant Hybrid Search<span class="d-sub">BM25 + vector search → top results → quality check</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">5️⃣ Responder<span class="d-sub">Formats results → streams to user via SSE events</span></div>
     </div>
-    <div>
-      <h3>LLM Calls per Node</h3>
-      <table class="spec-table">
-        <tr><th>Node</th><th>LLM Calls</th><th>Tools</th></tr>
-        <tr><td>Pref. Extractor</td><td>2</td><td>brand_origins, DB</td></tr>
-        <tr><td>Router</td><td>1</td><td>—</td></tr>
-        <tr><td>Catalogue</td><td>1</td><td>MCP check_catalogue</td></tr>
-        <tr><td>Search</td><td>2</td><td>MCP search, get_images</td></tr>
-        <tr><td>Recommend</td><td>1</td><td>MCP search, get_images</td></tr>
-        <tr><td>Advisor</td><td>3</td><td>MCP find_similar, web</td></tr>
-        <tr><td>Seller</td><td>2</td><td>MCP analyze_price, web</td></tr>
-        <tr><td>Guide</td><td>2</td><td>MCP website_guide</td></tr>
-        <tr><td>General</td><td>2</td><td>MCP web_search</td></tr>
-        <tr><td>Responder</td><td>0</td><td>SSE, DB</td></tr>
-      </table>
-      <div class="card" style="margin-top:8px;">
-        <h4>LLM Routing</h4>
-        <p>Simple: Groq <code>openai/gpt-oss-120b</code> (0.0, cached)</p>
-        <p>Complex: Groq <code>qwen3.6-27b</code> → OpenRouter fallback (0.3)</p>
+  </div>
+  <div class="d-section" style="margin-bottom:0;">
+    <div class="d-section-title">🧠 LLM Intelligence Routing</div>
+    <div class="d-row" style="gap:8px;">
+      <div class="card" style="flex:1;padding:12px;">
+        <h4 style="font-size:13px;">⚡ Simple Tasks</h4>
+        <p style="font-size:11px;">Routing, extraction, classification</p>
+        <span class="tag tag-green" style="font-size:10px;">Groq Fast Model</span>
+      </div>
+      <div class="card" style="flex:1;padding:12px;">
+        <h4 style="font-size:13px;">🧠 Complex Reasoning</h4>
+        <p style="font-size:11px;">Analysis, comparison, pricing</p>
+        <span class="tag tag-cyan" style="font-size:10px;">Groq Powerful Model</span>
+        <span style="font-size:10px;color:var(--text-muted);display:block;margin-top:2px;">↳ falls back to OpenRouter if needed</span>
+      </div>
+      <div class="card" style="flex:1;padding:12px;">
+        <h4 style="font-size:13px;">👁️ Vision Tasks</h4>
+        <p style="font-size:11px;">Image analysis & comparisons</p>
+        <span class="tag tag-yellow" style="font-size:10px;">OpenRouter Vision</span>
       </div>
     </div>
   </div>
@@ -679,11 +686,11 @@
   <h2><span class="badge">15</span> Multi-LLM Fallback Chain</h2>
   <table class="spec-table" style="margin-top:16px;">
     <tr><th>Provider</th><th>Model</th><th>Use</th><th>Temp</th></tr>
-    <tr><td><span class="tag tag-green">Groq (Fast)</span></td><td><code>openai/gpt-oss-120b</code></td><td>Routing, extraction</td><td>0.0</td></tr>
-    <tr><td><span class="tag tag-cyan">Groq (Powerful)</span></td><td><code>qwen3.6-27b</code></td><td>Complex reasoning</td><td>0.3</td></tr>
-    <tr><td><span class="tag tag-purple">OpenRouter</span></td><td><code>nemotron-3-nano</code></td><td>Fallback complex</td><td>0.3</td></tr>
-    <tr><td><span class="tag tag-yellow">OpenRouter (Vision)</span></td><td><code>gemini-2.0-flash-exp</code></td><td>Image + comparison</td><td>0.1-0.2</td></tr>
-    <tr><td><span class="tag tag-blue">Groq (Backend)</span></td><td><code>llama-3.3-70b</code></td><td>Comparison analysis</td><td>0.2</td></tr>
+    <tr><td><span class="tag tag-green">Groq (Fast)</span></td><td>openai/gpt-oss-120b</td><td>Routing, extraction</td><td>0.0</td></tr>
+    <tr><td><span class="tag tag-cyan">Groq (Powerful)</span></td><td>qwen/qwen3.6-27b</td><td>Complex reasoning</td><td>0.3</td></tr>
+    <tr><td><span class="tag tag-purple"><img src="logos/nvidia.svg" alt="">OpenRouter</span></td><td>nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free</td><td>Fallback complex</td><td>0.3</td></tr>
+    <tr><td><span class="tag tag-yellow">OpenRouter (Vision)</span></td><td>google/gemini-2.0-flash-exp:free</td><td>Image + comparison</td><td>0.1-0.2</td></tr>
+    <tr><td><span class="tag tag-blue">Groq (Backend)</span></td><td>llama-3.3-70b-versatile</td><td>Comparison analysis</td><td>0.2</td></tr>
   </table>
   <div class="grid-2" style="margin-top:16px;">
     <div class="card">
@@ -699,11 +706,11 @@
     <div class="card">
       <h4>MCP Tools (10)</h4>
       <div style="font-size:12px;line-height:1.7;">
-        <code>search_cars</code>, <code>find_similar_cars</code>,<br>
-        <code>check_catalogue</code>, <code>analyze_market_price</code>,<br>
-        <code>web_search</code>, <code>get_car_images</code>,<br>
-        <code>get_website_guide</code>, <code>expand_brand_origins</code>,<br>
-        <code>expand_colloquial_terms</code>
+        search_cars, find_similar_cars,<br>
+        check_catalogue, analyze_market_price,<br>
+        web_search, get_car_images,<br>
+        get_website_guide, expand_brand_origins,<br>
+        expand_colloquial_terms
       </div>
     </div>
   </div>
@@ -711,67 +718,107 @@
 
 <!-- ===== SLIDE 17: COMPARISON ENGINE ====== -->
 <div class="slide" data-index="16">
-  <h2><span class="badge">16</span> AI Car Comparison Engine</h2>
-  <p>Two parallel implementations — SSE streaming, web research, scoring, hallucination guards.</p>
-  <div class="grid-2" style="margin-top:16px;">
-    <div>
-      <h3>Pipeline</h3>
-      <div class="d-container">
-        <div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">Load ads from PG</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">Web research (Tavily, 3 queries)</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-purple d-box-sm" style="padding:6px 12px;font-size:11px;">Analyze (OpenRouter → Groq)</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-green d-box-sm" style="padding:6px 12px;font-size:11px;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#86efac;">Compare + hallucination guard</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">Cache → SSE report event</div>
+  <h2><span class="badge">16</span> AI Car Comparison — How It Works</h2>
+  <div class="d-section" style="margin-bottom:6px;">
+    <div class="d-section-title">⚙️ Step-by-Step Process</div>
+    <div class="d-container">
+      <div class="d-row" style="gap:4px;">
+        <div class="d-box box-gray d-box-sm" style="padding:6px 10px;font-size:10px;flex:1;">1️⃣ Select 2 cars to compare</div>
+        <div style="font-size:16px;color:var(--text-muted);">→</div>
+        <div class="d-box box-blue d-box-sm" style="padding:6px 10px;font-size:10px;flex:1;">2️⃣ Load full specs from database</div>
+        <div style="font-size:16px;color:var(--text-muted);">→</div>
+        <div class="d-box box-accent d-box-sm" style="padding:6px 10px;font-size:10px;flex:1;">3️⃣ Web research (Tavily)<span class="d-sub">3 targeted queries per car</span></div>
+        <div style="font-size:16px;color:var(--text-muted);">→</div>
+        <div class="d-box box-purple d-box-sm" style="padding:6px 10px;font-size:10px;flex:1;">4️⃣ AI analyzes & scores<span class="d-sub">OpenRouter + Groq</span></div>
+        <div style="font-size:16px;color:var(--text-muted);">→</div>
+        <div class="d-box box-success d-box-sm" style="padding:6px 10px;font-size:10px;flex:1;">5️⃣ Hallucination guard check</div>
+        <div style="font-size:16px;color:var(--text-muted);">→</div>
+        <div class="d-box box-warning d-box-sm" style="padding:6px 10px;font-size:10px;flex:1;">6️⃣ Final report streamed to user</div>
       </div>
     </div>
-    <div>
-      <h3>Scoring (0-10)</h3>
-      <table class="spec-table">
-        <tr><th>Category</th><th>Description</th></tr>
-        <tr><td>Value for money</td><td>Price vs. market</td></tr>
-        <tr><td>Reliability</td><td>Brand/model reputation</td></tr>
-        <tr><td>Running cost</td><td>Fuel + maintenance</td></tr>
-        <tr><td>Resale value</td><td>Depreciation estimate</td></tr>
-        <tr><td>Overall</td><td>Combined score</td></tr>
-      </table>
-      <div class="card" style="margin-top:8px;">
-        <h4>Hallucination Guard (5 checks)</h4>
-        <div style="font-size:12px;">Claim trace-back · No accident claims without visuals · No mechanical faults · Confidence consistency · Winner validity</div>
+  </div>
+  <div class="d-section" style="margin-bottom:6px;">
+    <div class="d-section-title">📊 How Cars Are Scored (0-10)</div>
+    <div class="d-row" style="gap:6px;">
+      <div class="card" style="flex:1;padding:10px;text-align:center;">
+        <span style="font-size:20px;">💰</span>
+        <h4 style="font-size:12px;margin-top:4px;">Value for Money</h4>
+        <p style="font-size:10px;">Price vs. market average</p>
       </div>
+      <div class="card" style="flex:1;padding:10px;text-align:center;">
+        <span style="font-size:20px;">🔧</span>
+        <h4 style="font-size:12px;margin-top:4px;">Reliability</h4>
+        <p style="font-size:10px;">Brand & model reputation</p>
+      </div>
+      <div class="card" style="flex:1;padding:10px;text-align:center;">
+        <span style="font-size:20px;">⛽</span>
+        <h4 style="font-size:12px;margin-top:4px;">Running Cost</h4>
+        <p style="font-size:10px;">Fuel + maintenance</p>
+      </div>
+      <div class="card" style="flex:1;padding:10px;text-align:center;">
+        <span style="font-size:20px;">📈</span>
+        <h4 style="font-size:12px;margin-top:4px;">Resale Value</h4>
+        <p style="font-size:10px;">Depreciation estimate</p>
+      </div>
+      <div class="card" style="flex:1;padding:10px;text-align:center;border-color:var(--primary);">
+        <span style="font-size:20px;">🏆</span>
+        <h4 style="font-size:12px;margin-top:4px;">Overall</h4>
+        <p style="font-size:10px;">Weighted combined score</p>
+      </div>
+    </div>
+  </div>
+  <div class="d-section" style="margin-bottom:0;">
+    <div class="d-section-title">🛡️ Hallucination Guard — 5 Safety Checks</div>
+    <div class="d-row" style="gap:6px;flex-wrap:wrap;">
+      <div class="d-box box-success d-box-sm" style="padding:4px 8px;font-size:10px;">✅ Claim trace-back to web sources</div>
+      <div class="d-box box-success d-box-sm" style="padding:4px 8px;font-size:10px;">✅ No accident claims without visuals</div>
+      <div class="d-box box-success d-box-sm" style="padding:4px 8px;font-size:10px;">✅ No mechanical fault diagnoses</div>
+      <div class="d-box box-success d-box-sm" style="padding:4px 8px;font-size:10px;">✅ Confidence score consistency</div>
+      <div class="d-box box-success d-box-sm" style="padding:4px 8px;font-size:10px;">✅ Winner validity verification</div>
+    </div>
+    <div class="card" style="margin-top:8px;padding:10px;text-align:center;">
+      <p style="font-size:11px;margin:0;">🔒 Every comparison passes through all 5 checks before reaching the user — if any check fails, the report is regenerated</p>
     </div>
   </div>
 </div>
 
 <!-- ===== SLIDE 18: PRICE ANALYSIS ====== -->
 <div class="slide" data-index="17">
-  <h2><span class="badge">17</span> AI Price Analysis</h2>
-  <div class="grid-2" style="margin-top:16px;">
-    <div>
-      <div class="d-container">
-        <div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">POST /price-analysis {make, model, year}</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">Check Redis cache (TTL 3600s)</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;">DuckDuckGo (7 queries) → Tavily fallback</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">Groq extracts low/high/average EGP prices</div>
-        <div class="d-arrow" style="height:8px;"></div>
-        <div class="d-box box-purple d-box-sm" style="padding:6px 12px;font-size:11px;">Response: {range, confidence, summary, sources}</div>
-      </div>
+  <h2><span class="badge">17</span> AI Price Analysis — How It Works</h2>
+  <div class="d-section" style="margin-bottom:6px;">
+    <div class="d-section-title">🔎 How We Find Market Prices</div>
+    <div class="d-container">
+      <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;max-width:250px;">📝 User provides: make + model + year</div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">⚡ Redis Cache Check<span class="d-sub">Return cached result if available (TTL 1 hour)</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">🌐 Web Search Phase<span class="d-sub">7 parallel DuckDuckGo queries → Tavily fallback if needed</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;">🔬 AI Extraction<span class="d-sub">Groq extracts low / high / average prices in EGP from search results</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">💾 Cache result → Return to user</div>
     </div>
-    <div>
-      <div class="card" style="font-size:13px;">
-        <code>make</code> — "BMW"<br>
-        <code>model</code> — "520i"<br>
-        <code>year</code> — 2022<br>
-        <code>estimated_range</code> — { low, high, average } in EGP<br>
-        <code>confidence</code> — "high/medium/low"<br>
-        <code>summary</code> — 2-3 sentence analysis<br>
-        <code>sources</code> — up to 10 { title, url }
+  </div>
+  <div class="d-section" style="margin-bottom:0;">
+    <div class="d-section-title">📋 Final Output — What the User Sees</div>
+    <div class="d-row" style="gap:8px;">
+      <div class="card" style="flex:1;padding:14px;border-left:3px solid var(--primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:600;">BMW 520i 2022</span>
+          <span class="tag tag-green" style="font-size:10px;">High Confidence</span>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:10px;text-align:center;">
+          <div style="flex:1;"><span style="font-size:10px;color:var(--text-muted);display:block;">Low</span><span style="font-size:18px;font-weight:700;color:var(--text);">1,200,000</span><span style="font-size:10px;color:var(--text-muted);display:block;">EGP</span></div>
+          <div style="flex:1;border-left:1px solid var(--border);border-right:1px solid var(--border);"><span style="font-size:10px;color:var(--text-muted);display:block;">Average</span><span style="font-size:18px;font-weight:700;color:var(--primary);">1,450,000</span><span style="font-size:10px;color:var(--text-muted);display:block;">EGP</span></div>
+          <div style="flex:1;"><span style="font-size:10px;color:var(--text-muted);display:block;">High</span><span style="font-size:18px;font-weight:700;color:var(--text);">1,750,000</span><span style="font-size:10px;color:var(--text-muted);display:block;">EGP</span></div>
+        </div>
+        <p style="font-size:11px;margin-top:8px;text-align:center;">The BMW 520i 2022 is priced competitively in the Egyptian market, with good availability across Cairo and Alexandria.</p>
+        <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:6px;">
+          <span class="tag tag-blue" style="font-size:9px;">ContactCars</span>
+          <span class="tag tag-cyan" style="font-size:9px;">Hatla2ee</span>
+          <span class="tag tag-green" style="font-size:9px;">OLX Egypt</span>
+          <span class="tag tag-yellow" style="font-size:9px;">+7 more sources</span>
+        </div>
       </div>
     </div>
   </div>
@@ -786,20 +833,20 @@
       <h3>Backend</h3>
       <table class="spec-table">
         <tr><th>Key</th><th>TTL</th><th>Data</th></tr>
-        <tr><td><code>cache:brand-counts</code></td><td>300s</td><td>Brand ad counts + logos</td></tr>
-        <tr><td><code>cache:site-assets</code></td><td>3600s</td><td>Logo + wallpaper URLs</td></tr>
-        <tr><td><code>cache:analytics-stats</code></td><td>300s</td><td>Total ads, users, sessions</td></tr>
-        <tr><td><code>cache:compare-ai:{id1}:{id2}</code></td><td>1800s</td><td>Full comparison SSE stream</td></tr>
+        <tr><td>cache:brand-counts</td><td>300s</td><td>Brand ad counts + logos</td></tr>
+        <tr><td>cache:site-assets</td><td>3600s</td><td>Logo + wallpaper URLs</td></tr>
+        <tr><td>cache:analytics-stats</td><td>300s</td><td>Total ads, users, sessions</td></tr>
+        <tr><td>cache:compare-ai:{id1}:{id2}</td><td>1800s</td><td>Full comparison SSE stream</td></tr>
       </table>
     </div>
     <div>
       <h3>Comparison & Chatbot</h3>
       <table class="spec-table">
         <tr><th>Key / Cache</th><th>TTL</th><th>Data</th></tr>
-        <tr><td><code>compare:{md5}:{lang}</code></td><td>3600s</td><td>Comparison report</td></tr>
-        <tr><td><code>price:{make}:{model}:{year}</code></td><td>3600s</td><td>Price analysis</td></tr>
-        <tr><td><span class="tag tag-purple">embedding_cache</span></td><td>7200s</td><td>384-dim vectors (in-memory)</td></tr>
-        <tr><td><span class="tag tag-purple">llm_response_cache</span></td><td>120s</td><td>Simple LLM responses</td></tr>
+        <tr><td>compare:{md5}:{lang}</td><td>3600s</td><td>Comparison report</td></tr>
+        <tr><td>price:{make}:{model}:{year}</td><td>3600s</td><td>Price analysis</td></tr>
+        <span class="tag tag-purple"><img src="logos/redis.svg" alt="">embedding_cache</span></td><td>7200s</td><td>384-dim vectors (in-memory)</td></tr>
+        <tr><td><span class="tag tag-purple"><img src="logos/redis.svg" alt="">llm_response_cache</span></td><td>120s</td><td>Simple LLM responses</td></tr>
       </table>
     </div>
   </div>
@@ -807,21 +854,46 @@
 
 <!-- ===== SLIDE 20: VOICE ASSISTANT ====== -->
 <div class="slide" data-index="19">
-  <h2><span class="badge">19</span> Voice Assistant — Phase 1</h2>
-  <div class="d-container">
-    <div class="d-box box-gray d-box-sm" style="padding:8px;font-size:12px;">User speaks 🎤</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-blue d-box-sm" style="padding:8px;font-size:12px;">MediaRecorder (webm/opus, max 25MB)</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-accent d-box-sm" style="padding:8px;font-size:12px;">POST /chat/stt → Backend → Chatbot</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-success d-box-sm" style="padding:8px;font-size:12px;">Groq Whisper <code>whisper-large-v3-turbo</code><span class="d-sub">3 API key fallbacks</span></div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-purple d-box-sm" style="padding:8px;font-size:12px;">LangGraph chat → SSE events</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-warning d-box-sm" style="padding:8px;font-size:12px;">TTS: edge-tts (ar-EG-SalmaNeural / en-US-JennyNeural)</div>
-    <div class="d-arrow"></div>
-    <div class="d-box box-gray d-box-sm" style="padding:8px;font-size:12px;">HTMLAudioElement playback</div>
+  <h2><span class="badge">19</span> Voice Assistant — How It Works</h2>
+  <div class="d-section" style="margin-bottom:6px;">
+    <div class="d-section-title">🎤 Complete Voice Pipeline (Arabic & English)</div>
+    <div class="d-container">
+      <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;max-width:200px;">🗣️ User speaks in Arabic or English</div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-blue d-box-sm" style="padding:6px 12px;font-size:11px;">🎙️ Browser captures audio<span class="d-sub">WebM/Opus, max 25MB</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-accent d-box-sm" style="padding:6px 12px;font-size:11px;">📡 Audio sent to backend</div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-row" style="gap:6px;">
+        <div class="d-box box-success d-box-sm" style="padding:6px 12px;font-size:11px;flex:1;">🎯 Speech-to-Text via Groq Whisper<span class="d-sub">Automatic transcription</span></div>
+        <div style="font-size:16px;color:var(--text-muted);">→</div>
+        <div class="d-box box-purple d-box-sm" style="padding:6px 12px;font-size:11px;flex:1;">🧠 AI Chat processes the text<span class="d-sub">Multi-agent conversation</span></div>
+      </div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-warning d-box-sm" style="padding:6px 12px;font-size:11px;">🔊 Text-to-Speech via edge-tts<span class="d-sub">Natural voice synthesis</span></div>
+      <div class="d-arrow" style="height:8px;"></div>
+      <div class="d-box box-gray d-box-sm" style="padding:6px 12px;font-size:11px;">🔉 Response spoken back to user</div>
+    </div>
+  </div>
+  <div class="d-section" style="margin-bottom:0;">
+    <div class="d-section-title">🌍 Bilingual Support</div>
+    <div class="d-row" style="gap:8px;">
+      <div class="card" style="flex:1;padding:12px;text-align:center;border-left:3px solid var(--primary);">
+        <span style="font-size:28px;">🇪🇬</span>
+        <h4 style="font-size:13px;margin-top:6px;">Arabic</h4>
+        <p style="font-size:11px;">Automatic Arabic speech recognition & natural TTS voice</p>
+        <span class="tag tag-cyan" style="font-size:10px;">ar-EG-SalmaNeural</span>
+      </div>
+      <div class="card" style="flex:1;padding:12px;text-align:center;border-left:3px solid var(--accent);">
+        <span style="font-size:28px;">🇬🇧</span>
+        <h4 style="font-size:13px;margin-top:6px;">English</h4>
+        <p style="font-size:11px;">Full English support with natural American English voice</p>
+        <span class="tag tag-purple" style="font-size:10px;">en-US-JennyNeural</span>
+      </div>
+    </div>
+    <div class="card" style="margin-top:6px;padding:8px;text-align:center;">
+      <p style="font-size:11px;margin:0;">🔄 The system auto-detects the spoken language and responds in the same language</p>
+    </div>
   </div>
 </div>
 
@@ -831,20 +903,20 @@
   <div class="grid-2" style="margin-top:16px;">
     <div>
       <h3>Prometheus</h3>
-      <p>Scrapes all 3 services every 15s at <code>/metrics</code></p>
+      <p>Scrapes all 3 services every 15s at /metrics</p>
       <div class="card">
-        <span class="tag tag-blue">backend:8000</span>
-        <span class="tag tag-cyan">chatbot:8001</span>
+        <span class="tag tag-blue"><img src="logos/python.svg" alt="">backend:8000</span>
+        <span class="tag tag-cyan"><img src="logos/langchain.svg" alt="">chatbot:8001</span>
         <span class="tag tag-green">comparison:8002</span>
       </div>
       <div class="card" style="margin-top:8px;">
         <h4>Key Metrics</h4>
         <div style="font-size:12px;line-height:1.6;">
-          <code>http_requests_total</code> / <code>http_request_duration_seconds</code><br>
-          <code>llm_calls_total{service, task_type}</code><br>
-          <code>llm_tokens_total / llm_latency_seconds</code><br>
-          <code>llm_cost_total_usd / llm_fallback_total</code><br>
-          <code>comparison_requests_total / search_quality_total</code>
+          http_requests_total / http_request_duration_seconds<br>
+          llm_calls_total{service, task_type}<br>
+          llm_tokens_total / llm_latency_seconds<br>
+          llm_cost_total_usd / llm_fallback_total<br>
+          comparison_requests_total / search_quality_total
         </div>
       </div>
     </div>
@@ -868,22 +940,49 @@
   </div>
 </div>
 
-<!-- ===== SLIDE 22: FRONTEND ====== -->
+<!-- ===== SLIDE 22: RESULTS & PERFORMANCE ====== -->
 <div class="slide" data-index="21">
-  <h2><span class="badge">21</span> Frontend Tech Stack</h2>
+  <h2><span class="badge">21</span> Results & Performance</h2>
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="card" style="border-left:3px solid var(--success);">
+      <h4 style="color:var(--success);">🔎 Search Quality Pass Rate</h4>
+      <p style="font-size:24px;font-weight:700;color:var(--text);margin:8px 0;">[TODO: fill in]</p>
+      <p>Percentage of queries passing quality evaluation (top_score > 0.65 AND avg_score > 0.5) — search_quality_total metric</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--primary);">
+      <h4 style="color:var(--primary);">⚡ Average LLM Latency</h4>
+      <p style="font-size:24px;font-weight:700;color:var(--text);margin:8px 0;">p50: [TODO: fill in] / p95: [TODO: fill in]</p>
+      <p>End-to-end latency across all LLM providers — llm_latency_seconds metric</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--accent);">
+      <h4 style="color:var(--accent);">📦 Cache Hit Rate</h4>
+      <p style="font-size:24px;font-weight:700;color:var(--text);margin:8px 0;">[TODO: fill in]</p>
+      <p>Redis cache efficiency across price analysis, comparisons, and embeddings</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--warning);">
+      <h4 style="color:var(--warning);">🛡️ Hallucination Guard Pass Rate</h4>
+      <p style="font-size:24px;font-weight:700;color:var(--text);margin:8px 0;">[TODO: fill in]</p>
+      <p>Percentage of comparison results passing all 5 hallucination guard checks</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SLIDE 23: FRONTEND ====== -->
+<div class="slide" data-index="22">
+  <h2><span class="badge">22</span> Frontend Tech Stack</h2>
   <div class="grid-2" style="margin-top:16px;">
     <div>
       <h3>Core Technologies</h3>
       <div class="card">
-        <span class="tech-badge">Next.js 16</span>
-        <span class="tech-badge">TypeScript</span>
-        <span class="tech-badge">Tailwind CSS 3</span>
+        <span class="tech-badge"><img src="logos/nextdotjs.svg" alt="">Next.js 16</span>
+        <span class="tech-badge"><img src="logos/typescript.svg" alt="">TypeScript</span>
+        <span class="tech-badge"><img src="logos/tailwindcss.svg" alt="">Tailwind CSS 3</span>
         <span class="tech-badge">Zustand</span>
-        <span class="tech-badge">Framer Motion</span>
+        <span class="tech-badge"><img src="logos/framer.svg" alt="">Framer Motion</span>
         <span class="tech-badge">Recharts</span>
-        <span class="tech-badge">Lucide React</span>
-        <span class="tech-badge">React Hook Form</span>
-        <span class="tech-badge">Zod</span>
+        <span class="tech-badge"><img src="logos/lucide.svg" alt="">Lucide React</span>
+        <span class="tech-badge"><img src="logos/reacthookform.svg" alt="">React Hook Form</span>
+        <span class="tech-badge"><img src="logos/zod.svg" alt="">Zod</span>
         <span class="tech-badge">next-intl</span>
       </div>
       <div class="card" style="margin-top:8px;">
@@ -895,13 +994,13 @@
       <h3>Pages</h3>
       <table class="spec-table">
         <tr><th>Route</th><th>Feature</th></tr>
-        <tr><td><code>/</code></td><td>Hero + featured cars + brands</td></tr>
-        <tr><td><code>/ads</code></td><td>Grid + filters + search</td></tr>
-        <tr><td><code>/ads/[id]</code></td><td>Detail + AI advisor</td></tr>
-        <tr><td><code>/chat</code></td><td>Full chat + voice input</td></tr>
-        <tr><td><code>/compare</code></td><td>Head-to-head comparison</td></tr>
-        <tr><td><code>/search</code></td><td>Search results</td></tr>
-        <tr><td><code>/profile</code></td><td>User settings</td></tr>
+        <tr><td>/</td><td>Hero + featured cars + brands</td></tr>
+        <tr><td>/ads</td><td>Grid + filters + search</td></tr>
+        <tr><td>/ads/[id]</td><td>Detail + AI advisor</td></tr>
+        <tr><td>/chat</td><td>Full chat + voice input</td></tr>
+        <tr><td>/compare</td><td>Head-to-head comparison</td></tr>
+        <tr><td>/search</td><td>Search results</td></tr>
+        <tr><td>/profile</td><td>User settings</td></tr>
       </table>
       <div class="card" style="margin-top:8px;">
         <h4>Stores</h4>
@@ -913,9 +1012,34 @@
   </div>
 </div>
 
-<!-- ===== SLIDE 23: SUMMARY ====== -->
-<div class="slide" data-index="22">
-  <h2><span class="badge">22</span> Summary</h2>
+<!-- ===== SLIDE 24: KEY DESIGN DECISIONS ====== -->
+<div class="slide" data-index="23">
+  <h2><span class="badge">23</span> Key Design Decisions</h2>
+  <div class="grid-3" style="margin-top:16px;">
+    <div class="card" style="border-left:3px solid var(--primary);">
+      <h4 style="color:var(--primary);">🔎 Hybrid BM25 + Vector Search</h4>
+      <p><strong>Decision:</strong> RRF fusion of BM25 full-text + vector cosine search</p>
+      <p><strong>Alternative considered:</strong> Pure vector search with all-MiniLM-L6-v2</p>
+      <p><strong>Why this won:</strong> Pure vector search missed exact keyword matches (e.g., model codes like "520i"). BM25 handles precise term matching while vector captures semantic intent. RRF fusion gives best of both worlds with automatic quality evaluation and broader retry on low scores.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--success);">
+      <h4 style="color:var(--success);">🧠 3-Tier LLM Fallback</h4>
+      <p><strong>Decision:</strong> Groq (fast) → Groq (powerful) → OpenRouter → Groq fallback</p>
+      <p><strong>Alternative considered:</strong> Single-provider (Groq only)</p>
+      <p><strong>Why this won:</strong> Groq provides low latency but limited model selection. OpenRouter adds redundancy and access to specialized models (vision, reasoning). The 3-tier chain ensures 99.9% uptime — if Groq is down, OpenRouter takes over, with a final Groq fast model as last resort.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--warning);">
+      <h4 style="color:var(--warning);">🛡️ Hallucination Guard Layer</h4>
+      <p><strong>Decision:</strong> 5-check validation before returning comparison results</p>
+      <p><strong>Alternative considered:</strong> No validation layer (trust LLM output directly)</p>
+      <p><strong>Why this won:</strong> LLMs confidently fabricate car specifications and pricing. The 5-check system (claim trace-back, accident claim validation, mechanical fault restrictions, confidence consistency, winner validity) catches hallucinations before they reach users, critical for a marketplace where inaccurate data could lead to poor purchase decisions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SLIDE 25: SUMMARY ====== -->
+<div class="slide" data-index="24">
+  <h2><span class="badge">24</span> Summary</h2>
   <div class="grid-2" style="margin-top:16px;">
     <div>
       <h3>What We Built</h3>
@@ -932,6 +1056,7 @@
       <div class="card" style="margin-bottom:8px;"><h4>Full Observability</h4><p>Prometheus + Grafana + Loki</p></div>
       <div class="card" style="margin-bottom:8px;"><h4>Docker Microservices</h4><p>9 services, health checks, Makefile</p></div>
       <div style="text-align:center; margin-top:20px;">
+        <img src="logo.png" alt="Deals Logo" style="height:48px; margin-bottom:12px;">
         <p style="font-size:18px; font-weight:600;">Thank you!</p>
         <p style="color:var(--text-muted);">Questions & Discussion</p>
       </div>
@@ -945,7 +1070,7 @@
 <div class="controls">
   <button onclick="goToSlide(0)">⏮</button>
   <button onclick="prevSlide()" id="prevBtn">◀ Prev</button>
-  <span class="page-indicator" id="pageIndicator">1 / 23</span>
+  <span class="page-indicator" id="pageIndicator">1 / 25</span>
   <button onclick="nextSlide()" id="nextBtn">Next ▶</button>
   <button onclick="goToSlide(totalSlides - 1)">⏭</button>
   <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>

@@ -90,7 +90,7 @@ Sources: {reputation_sources}
 
 
 def _sources_text(research: dict) -> str:
-    sources = research.get("sources", [])
+    sources = research.get("results", [])
     if not sources:
         return "No sources available."
     lines = []
