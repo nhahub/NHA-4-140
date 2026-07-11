@@ -14,12 +14,12 @@ Deals is a full-stack AI car marketplace with 3 microservices and a modern front
 
 | Feature | Description |
 |---|---|
-| **🧠 AI Chat Assistant** | 10-node LangGraph conversational agent — searches, advises, compares, guides |
-| **🔎 Semantic Search** | Hybrid BM25 + vector search on Qdrant with 11 field filters and quality evaluation |
-| **⚖️ AI Comparison** | Head-to-head analysis with web research, 6-category scoring, and hallucination guard |
-| **📊 Price Analysis** | AI-powered market price estimation from DuckDuckGo + Tavily research |
-| **🗣️ Voice Assistant** | STT via Groq Whisper + TTS via edge-tts — Arabic & English |
-| **📈 Observability** | Prometheus + Grafana + Loki — metrics, dashboards, and log aggregation |
+| **AI Chat Assistant** | 10-node LangGraph conversational agent — searches, advises, compares, guides |
+| **Semantic Search** | Hybrid BM25 + vector search on Qdrant with 11 field filters and quality evaluation |
+| **AI Comparison** | Head-to-head analysis with web research, 6-category scoring, and hallucination guard |
+| **Price Analysis** | AI-powered market price estimation from DuckDuckGo + Tavily research |
+| **Voice Assistant** | STT via Groq Whisper + TTS via edge-tts — Arabic & English |
+| **Observability** | Prometheus + Grafana + Loki — metrics, dashboards, and log aggregation |
 
 ---
 
@@ -65,7 +65,7 @@ Deals is a full-stack AI car marketplace with 3 microservices and a modern front
 
 ## Key Features (Deep Dive)
 
-### 🔎 Hybrid Semantic Search
+### Hybrid Semantic Search
 
 Hybrid BM25 full-text + vector cosine search fused via RRF (Reciprocal Rank Fusion).
 
@@ -75,7 +75,7 @@ Hybrid BM25 full-text + vector cosine search fused via RRF (Reciprocal Rank Fusi
 - **Quality evaluation:** top_score > 0.65 AND avg_score > 0.5 → broader retry on low scores
 - **Embedding text:** brand + model + year + body_type + fuel_type + transmission + condition + city + cc_range + description + special_conditions
 
-### 🧠 LangGraph AI Assistant
+### LangGraph AI Assistant
 
 A 10-node directed state machine with 5 specialist nodes:
 
@@ -86,7 +86,7 @@ A 10-node directed state machine with 5 specialist nodes:
 
 Specialists call MCP tools via a centralized registry. Each tool call follows: Agent → MCP Client → MCP Server → external data → response back.
 
-### 🛠️ MCP Architecture — 10 Tools, 2 Servers
+### MCP Architecture — 10 Tools, 2 Servers
 
 **Car-Search Server** (5 tools): `search_cars`, `get_car_details`, `find_similar_cars`, `check_catalogue`, `get_car_images`
 
@@ -94,7 +94,7 @@ Specialists call MCP tools via a centralized registry. Each tool call follows: A
 
 All tools use in-process transport. If MCP fails, agents fall back to direct Qdrant/PostgreSQL queries.
 
-### ⚖️ AI Comparison Engine
+### AI Comparison Engine
 
 Pipeline: Select 2 cars → Load specs from DB → Web research (Tavily) → AI analyzes & scores → Hallucination guard → Stream report
 
@@ -107,7 +107,7 @@ Pipeline: Select 2 cars → Load specs from DB → Web research (Tavily) → AI 
 - Confidence consistency
 - Winner validity
 
-### 📊 Price Analysis
+### Price Analysis
 
 1. User provides make + model + year
 2. Redis cache check (1hr TTL)
@@ -115,7 +115,7 @@ Pipeline: Select 2 cars → Load specs from DB → Web research (Tavily) → AI 
 4. AI extracts low/average/high prices in EGP
 5. Cache result → return to user
 
-### 🗣️ Voice Assistant
+### Voice Assistant
 
 Complete pipeline: User speaks → Browser captures audio (WebM/Opus, ≤25MB) → Sent to backend → Groq Whisper STT → AI Chat processes → edge-tts TTS → Response spoken
 
